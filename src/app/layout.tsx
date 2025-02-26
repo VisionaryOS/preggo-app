@@ -1,30 +1,28 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
+import { QueryClientProvider } from "@/lib/providers/query-client-provider";
+import { WebVitalsTracker } from "@/components/dev/WebVitalsTracker";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-sans",
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "MomCare - Support for Your Pregnancy Journey",
-  description: "A comprehensive app for pregnant women offering guidance, tracking, and community support throughout your pregnancy journey.",
+  title: "PregnancyPlus - Your Complete Pregnancy Companion",
+  description: "Track your pregnancy journey, get personalized insights, and connect with a supportive community - all in one beautifully designed app.",
   keywords: ["pregnancy", "pregnant", "mom", "baby", "health", "tracking", "prenatal care"],
   openGraph: {
-    title: "MomCare - Support for Your Pregnancy Journey",
-    description: "A comprehensive app for pregnant women offering guidance, tracking, and community support throughout your pregnancy journey.",
+    title: "PregnancyPlus - Your Complete Pregnancy Companion",
+    description: "Track your pregnancy journey, get personalized insights, and connect with a supportive community - all in one beautifully designed app.",
     images: [
       {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "MomCare App",
+        alt: "PregnancyPlus App",
       }
     ],
     type: "website",
@@ -39,9 +37,12 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${inter.variable} font-sans antialiased`}
       >
-        {children}
+        <QueryClientProvider>
+          {children}
+          <WebVitalsTracker />
+        </QueryClientProvider>
       </body>
     </html>
   );

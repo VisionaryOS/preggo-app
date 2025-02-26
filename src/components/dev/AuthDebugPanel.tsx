@@ -1,19 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/hooks/useAuth';
-import { runSupabaseDiagnostics, logDiagnosticResults } from '@/lib/supabase/diagnostics';
+import { checkSupabaseHealth, validateSupabaseConfig } from '@/lib/supabase/diagnostics';
 
 // Define type for diagnostics result
 interface DiagnosticsResult {
   configStatus: {
-    urlValid: boolean;
-    keyFormatValid: boolean;
-    region?: string;
-    availabilityZone?: string;
+    valid: boolean;
+    issues: string[];
   };
   connectionTest: {
     success: boolean;
     error: string | null;
-    responseTime: number;
+    latency: string;
   };
   storageCheck: {
     localStorageAvailable: boolean;
@@ -31,10 +29,26 @@ export function AuthDebugPanel() {
   const [lastUpdated, setLastUpdated] = useState(new Date());
   
   const refreshDiagnostics = async () => {
-    const results = await runSupabaseDiagnostics();
+    const configStatus = validateSupabaseConfig();
+    const connectionTest = await checkSupabaseHealth();
+    
+    const results: DiagnosticsResult = {
+      configStatus,
+      connectionTest,
+      storageCheck: {
+        localStorageAvailable: typeof window !== 'undefined' && !!window.localStorage
+      }
+    };
+    
     setDiagnosticsResult(results);
     setLastUpdated(new Date());
-    logDiagnosticResults(results);
+    
+    // Log results to console
+    console.group('Supabase Diagnostics');
+    console.log('Config Status:', configStatus);
+    console.log('Connection Test:', connectionTest);
+    console.log('Storage Check:', results.storageCheck);
+    console.groupEnd();
   };
   
   // Auto-refresh every 10 seconds if visible
@@ -99,42 +113,13 @@ export function AuthDebugPanel() {
           </div>
         </div>
         
-        {/* Circuit Breaker Status */}
-        <div className={`p-2 border rounded ${auth.circuitBreakerStatus.isOpen ? 'border-red-200 bg-red-50' : 'border-green-200 bg-green-50'}`}>
-          <h4 className="font-semibold mb-1">Circuit Breaker</h4>
-          <div className="grid grid-cols-2 gap-1">
-            <span className="text-gray-600">Status:</span>
-            <span className={auth.circuitBreakerStatus.isOpen ? 'text-red-600 font-medium' : 'text-green-600'}>
-              {auth.circuitBreakerStatus.isOpen ? 'OPEN' : 'CLOSED'}
-            </span>
-            
-            <span className="text-gray-600">Failures:</span>
-            <span>{auth.circuitBreakerStatus.failures}</span>
-            
-            <span className="text-gray-600">Can Retry:</span>
-            <span>{auth.circuitBreakerStatus.canRetry ? 'Yes' : 'No'}</span>
-          </div>
-          
-          {auth.circuitBreakerStatus.isOpen && (
-            <button
-              className="mt-2 w-full text-center bg-white text-red-600 border border-red-300 rounded px-2 py-1 text-xs"
-              onClick={() => auth.resetCircuitBreaker()}
-            >
-              Reset Circuit Breaker
-            </button>
-          )}
-        </div>
-        
         {/* Error Status */}
         {auth.error && (
           <div className="p-2 border border-red-200 bg-red-50 rounded">
             <h4 className="font-semibold mb-1">Current Error</h4>
             <div className="grid grid-cols-2 gap-1">
               <span className="text-gray-600">Message:</span>
-              <span className="text-red-600">{auth.error.message}</span>
-              
-              <span className="text-gray-600">Severity:</span>
-              <span>{auth.error.severity}</span>
+              <span className="text-red-600">{auth.error}</span>
             </div>
             
             <button
@@ -157,15 +142,17 @@ export function AuthDebugPanel() {
             </h4>
             
             <div className="grid grid-cols-2 gap-1">
-              <span className="text-gray-600">URL Valid:</span>
-              <span className={diagnosticsResult.configStatus.urlValid ? 'text-green-600' : 'text-red-600'}>
-                {diagnosticsResult.configStatus.urlValid ? 'Yes' : 'No'}
+              <span className="text-gray-600">Config Valid:</span>
+              <span className={diagnosticsResult.configStatus.valid ? 'text-green-600' : 'text-red-600'}>
+                {diagnosticsResult.configStatus.valid ? 'Yes' : 'No'}
               </span>
               
-              <span className="text-gray-600">Key Valid:</span>
-              <span className={diagnosticsResult.configStatus.keyFormatValid ? 'text-green-600' : 'text-red-600'}>
-                {diagnosticsResult.configStatus.keyFormatValid ? 'Yes' : 'No'}
-              </span>
+              {diagnosticsResult.configStatus.issues.length > 0 && (
+                <>
+                  <span className="text-gray-600">Issues:</span>
+                  <span className="text-red-600">{diagnosticsResult.configStatus.issues.join(', ')}</span>
+                </>
+              )}
               
               <span className="text-gray-600">Connection:</span>
               <span className={diagnosticsResult.connectionTest.success ? 'text-green-600' : 'text-red-600'}>
@@ -179,23 +166,13 @@ export function AuthDebugPanel() {
                 </>
               )}
               
-              <span className="text-gray-600">Region:</span>
-              <span>{diagnosticsResult.configStatus.region || 'Unknown'}</span>
-              
-              {diagnosticsResult.configStatus.availabilityZone && (
-                <>
-                  <span className="text-gray-600">Zone:</span>
-                  <span>{diagnosticsResult.configStatus.availabilityZone}</span>
-                </>
-              )}
-              
               <span className="text-gray-600">Storage:</span>
               <span className={diagnosticsResult.storageCheck.localStorageAvailable ? 'text-green-600' : 'text-red-600'}>
                 {diagnosticsResult.storageCheck.localStorageAvailable ? 'Available' : 'Unavailable'}
               </span>
               
               <span className="text-gray-600">Response time:</span>
-              <span>{diagnosticsResult.connectionTest.responseTime}ms</span>
+              <span>{diagnosticsResult.connectionTest.latency}</span>
             </div>
           </div>
         )}
@@ -207,13 +184,6 @@ export function AuthDebugPanel() {
           onClick={refreshDiagnostics}
         >
           Refresh Diagnostics
-        </button>
-        
-        <button
-          className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded"
-          onClick={() => auth.runDiagnostics()}
-        >
-          Run Full Diagnostics
         </button>
       </div>
     </div>

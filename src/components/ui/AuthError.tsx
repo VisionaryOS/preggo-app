@@ -1,33 +1,41 @@
-import { XCircle, AlertTriangle, Info, RefreshCw } from 'lucide-react';
+import { XCircle, AlertTriangle, Info } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { runSupabaseDiagnostics, getDiagnosticSummary } from '@/lib/supabase/diagnostics';
-import { useAuthStore } from '@/hooks/useAuth';
+import { checkSupabaseHealth, validateSupabaseConfig } from '@/lib/supabase/diagnostics';
 
 interface AuthErrorProps {
   message: string;
   severity: 'error' | 'warning' | 'info';
   onRetry?: () => void;
   onDismiss?: () => void;
-  showCircuitBreaker?: boolean;
 }
 
 export function AuthError({ 
   message, 
   severity, 
   onRetry, 
-  onDismiss,
-  showCircuitBreaker = true
+  onDismiss
 }: AuthErrorProps) {
   const [diagnosticInfo, setDiagnosticInfo] = useState<string | null>(null);
   const [isRunningDiagnostics, setIsRunningDiagnostics] = useState(false);
-  const auth = useAuthStore();
-  const circuitBreakerStatus = auth.circuitBreakerStatus;
 
   const runDiagnostics = async () => {
     setIsRunningDiagnostics(true);
     try {
-      const results = await runSupabaseDiagnostics();
-      const { issues, recommendations } = getDiagnosticSummary(results);
+      const configStatus = validateSupabaseConfig();
+      const connectionTest = await checkSupabaseHealth();
+      
+      const issues: string[] = [];
+      const recommendations: string[] = [];
+      
+      if (!configStatus.valid) {
+        issues.push('Configuration issues');
+        recommendations.push('Check your Supabase environment variables');
+      }
+      
+      if (!connectionTest.success) {
+        issues.push('Connection failed');
+        recommendations.push('Check your network connection or Supabase service status');
+      }
       
       if (issues.length > 0) {
         setDiagnosticInfo(`Issues found: ${issues.join(', ')}. ${recommendations.join('. ')}`);
@@ -79,23 +87,6 @@ export function AuthError({
           <div className={`mt-2 text-sm ${textColor}`}>
             <p>{message}</p>
             
-            {/* Circuit breaker status */}
-            {showCircuitBreaker && circuitBreakerStatus.isOpen && (
-              <div className="mt-2 text-sm p-2 border border-red-200 rounded bg-red-50">
-                <p className="font-medium">Authentication circuit breaker is open</p>
-                <p>Authentication operations are temporarily disabled to prevent performance issues.</p>
-                <p>Failures: {circuitBreakerStatus.failures}</p>
-                <button
-                  type="button"
-                  onClick={() => auth.resetCircuitBreaker()}
-                  className="mt-2 inline-flex items-center rounded-md bg-white px-2 py-1 text-sm font-semibold text-red-600 shadow-sm hover:bg-red-50"
-                >
-                  <RefreshCw className="mr-1 h-3 w-3" />
-                  Reset Circuit Breaker
-                </button>
-              </div>
-            )}
-            
             {diagnosticInfo && (
               <p className="mt-2 text-sm">
                 <strong>Diagnostic Results:</strong> {diagnosticInfo}
@@ -107,12 +98,10 @@ export function AuthError({
                 <button
                   type="button"
                   onClick={onRetry}
-                  disabled={circuitBreakerStatus.isOpen && !circuitBreakerStatus.canRetry}
                   className={`rounded-md bg-white px-3 py-2 text-sm font-semibold shadow-sm 
                     ${severity === 'error' ? 'text-red-600 hover:bg-red-50' : 
                      severity === 'warning' ? 'text-amber-600 hover:bg-amber-50' :
-                     'text-blue-600 hover:bg-blue-50'}
-                    disabled:opacity-50 disabled:cursor-not-allowed`}
+                     'text-blue-600 hover:bg-blue-50'}`}
                 >
                   Try Again
                 </button>

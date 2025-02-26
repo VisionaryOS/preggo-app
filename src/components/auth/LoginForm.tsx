@@ -1,34 +1,23 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, type LoginFormValues } from '@/types/auth.types';
 import { useAuth } from '@/hooks/useAuth';
-import { testSupabaseConnection } from '@/lib/supabase/client';
-import { runSupabaseDiagnostics } from '@/lib/supabase/diagnostics';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { motion } from 'framer-motion';
 
 export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<'unknown' | 'connected' | 'failed'>('unknown');
-  const { signIn } = useAuth();
-
-  // Verify Supabase connection on component mount
-  useEffect(() => {
-    const verifyConnection = async () => {
-      const result = await testSupabaseConnection();
-      setConnectionStatus(result.success ? 'connected' : 'failed');
-      
-      if (!result.success) {
-        console.error('Supabase connection test failed in login form:', result);
-      }
-    };
-    
-    verifyConnection();
-  }, []);
-
+  const { signIn, error, clearError } = useAuth();
+  const router = useRouter();
+  
   const {
     register,
     handleSubmit,
@@ -43,118 +32,150 @@ export default function LoginForm() {
 
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
-    setError(null);
-
-    // If connection status is failed, run diagnostics and provide helpful error
-    if (connectionStatus === 'failed') {
-      const diagnostics = await runSupabaseDiagnostics();
-      if (!diagnostics.connectionTest.success) {
-        setError('Authentication service is currently unavailable. Please try again later or contact support.');
-        console.error('Login attempted with failed connection. Diagnostics:', diagnostics);
-        setIsLoading(false);
-        return;
-      }
-    }
-
+    clearError();
+    
     try {
-      console.log('Attempting login for:', data.email);
       const response = await signIn(data.email, data.password);
       
-      if (response.error) {
-        console.error('Login error details:', response.error);
-        
-        // Handle specific error cases
-        if (response.error.message?.includes('Invalid login') || 
-            response.error.message?.includes('Invalid email')) {
-          setError('Invalid email or password. Please try again.');
-        } else if (response.error.message?.includes('Invalid API key') || 
-                  response.error.message?.includes('configuration')) {
-          // Run diagnostics to provide better error messages
-          const diagnostics = await runSupabaseDiagnostics();
-          setError('Authentication service configuration error. Please contact support.');
-          console.error('Auth configuration error during login:', diagnostics);
-        } else {
-          setError(response.error.message || 'Login failed. Please try again.');
-        }
+      if (!response.error && response.data?.session) {
+        // Successful login - redirect to dashboard
+        router.push('/dashboard');
       }
-    } catch (err) {
-      console.error('Unexpected login error:', err);
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred during login. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Show connection error if connection test failed
-  useEffect(() => {
-    if (connectionStatus === 'failed') {
-      setError('Unable to connect to the authentication service. Please try again later.');
-    } else if (connectionStatus === 'connected' && error === 'Unable to connect to the authentication service. Please try again later.') {
-      setError(null); // Clear the connection error if connection is now working
-    }
-  }, [connectionStatus, error]);
-
   return (
-    <div className="w-full max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Login to Your Account</h2>
-      
-      {error && (
-        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-          {error}
-        </div>
-      )}
-      
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            {...register('email')}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-            placeholder="your.email@example.com"
-            disabled={isLoading}
-          />
-          {errors.email && (
-            <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <Card className="border shadow-lg bg-white/80 backdrop-blur-sm">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold text-center">Welcome Back</CardTitle>
+          <CardDescription className="text-center">
+            Sign in to your account to continue
+          </CardDescription>
+        </CardHeader>
+        
+        <CardContent>
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-md">
+              <p className="text-sm font-medium">{error}</p>
+            </div>
           )}
-        </div>
+          
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">
+                Email
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="your.email@example.com"
+                {...register('email')}
+                disabled={isLoading}
+                className="w-full"
+              />
+              {errors.email && (
+                <p className="text-sm text-red-600 mt-1">{errors.email.message}</p>
+              )}
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <Label htmlFor="password">
+                  Password
+                </Label>
+                <Link href="/forgot-password" className="text-xs text-primary hover:underline">
+                  Forgot password?
+                </Link>
+              </div>
+              <Input
+                id="password"
+                type="password"
+                {...register('password')}
+                disabled={isLoading}
+                className="w-full"
+              />
+              {errors.password && (
+                <p className="text-sm text-red-600 mt-1">{errors.password.message}</p>
+              )}
+            </div>
+            
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="w-full"
+            >
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Signing in...
+                </>
+              ) : (
+                'Sign in'
+              )}
+            </Button>
+          </form>
+          
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-gray-200" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-muted-foreground">
+                Or continue with
+              </span>
+            </div>
+          </div>
+          
+          <div className="flex flex-col space-y-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isLoading}
+              className="w-full"
+            >
+              <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+                <path
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                  fill="#4285F4"
+                />
+                <path
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                  fill="#34A853"
+                />
+                <path
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                  fill="#FBBC05"
+                />
+                <path
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                  fill="#EA4335"
+                />
+                <path d="M1 1h22v22H1z" fill="none" />
+              </svg>
+              Sign in with Google
+            </Button>
+          </div>
+        </CardContent>
         
-        <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            {...register('password')}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-            disabled={isLoading}
-          />
-          {errors.password && (
-            <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
-          )}
-        </div>
-        
-        <button
-          type="submit"
-          disabled={isLoading || connectionStatus === 'failed'}
-          className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isLoading ? 'Logging in...' : 'Login'}
-        </button>
-        
-        <div className="text-center mt-4">
-          <p className="text-sm text-gray-600">
+        <CardFooter className="flex flex-col items-center">
+          <p className="text-sm text-center text-muted-foreground mt-4">
             Don&apos;t have an account?{' '}
-            <Link href="/signup" className="text-blue-600 hover:text-blue-800 font-medium">
+            <Link href="/signup" className="text-primary hover:underline font-medium">
               Sign up
             </Link>
           </p>
-        </div>
-      </form>
-    </div>
+        </CardFooter>
+      </Card>
+    </motion.div>
   );
 } 

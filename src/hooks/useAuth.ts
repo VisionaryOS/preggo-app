@@ -1,37 +1,15 @@
+'use client';
+
 import { create } from 'zustand';
-import { createClient } from '@/lib/supabase/client';
 import { User, Session, AuthError } from '@supabase/supabase-js';
-import { useEffect, useCallback, useRef } from 'react';
-import { handleAuthError } from '@/lib/utils/error-handler';
-import { runSupabaseDiagnostics, logDiagnosticResults, getDiagnosticSummary } from '@/lib/supabase/diagnostics';
-
-// Circuit breaker configuration
-const CIRCUIT_BREAKER = {
-  MAX_FAILURES: 3,
-  RESET_TIMEOUT: 60000, // 1 minute before resetting the circuit breaker
-  BACKOFF_BASE: 2, // Base for exponential backoff
-};
-
-// Global circuit state to prevent multiple instances from causing multiple retries
-interface CircuitState {
-  failures: number;
-  lastFailure: number;
-  isOpen: boolean;
-}
-
-// Create a global circuit state (outside component lifecycle)
-const circuitState: CircuitState = {
-  failures: 0,
-  lastFailure: 0,
-  isOpen: false,
-};
+import { useEffect, useState } from 'react';
 
 interface AuthState {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  error: { message: string; severity: 'error' | 'warning' | 'info' } | null;
+  error: string | null;
   signIn: (email: string, password: string) => Promise<{
     error: AuthError | null;
     data: { user: User | null; session: Session | null } | null;
@@ -41,45 +19,7 @@ interface AuthState {
     data: { user: User | null; session: Session | null } | null;
   }>;
   signOut: () => Promise<void>;
-  refreshSession: () => Promise<void>;
   clearError: () => void;
-  runDiagnostics: () => Promise<void>;
-  resetCircuitBreaker: () => void;
-  circuitBreakerStatus: {
-    isOpen: boolean;
-    failures: number;
-    canRetry: boolean;
-  };
-}
-
-function checkCircuitBreaker(): boolean {
-  // If circuit is open, check if it's time to try again
-  if (circuitState.isOpen) {
-    const now = Date.now();
-    const timeSinceLastFailure = now - circuitState.lastFailure;
-    
-    // Reset circuit after timeout period
-    if (timeSinceLastFailure > CIRCUIT_BREAKER.RESET_TIMEOUT) {
-      circuitState.failures = 0;
-      circuitState.isOpen = false;
-      console.info('Auth circuit breaker reset after timeout period');
-      return true;
-    }
-    
-    return false; // Circuit still open
-  }
-  
-  return true; // Circuit closed, can proceed
-}
-
-function recordFailure(): void {
-  circuitState.failures += 1;
-  circuitState.lastFailure = Date.now();
-  
-  if (circuitState.failures >= CIRCUIT_BREAKER.MAX_FAILURES) {
-    circuitState.isOpen = true;
-    console.warn(`Auth circuit breaker opened after ${CIRCUIT_BREAKER.MAX_FAILURES} failures`);
-  }
 }
 
 export const useAuthStore = create<AuthState>()((set) => ({
@@ -91,81 +31,51 @@ export const useAuthStore = create<AuthState>()((set) => ({
   
   clearError: () => set({ error: null }),
   
-  resetCircuitBreaker: () => {
-    circuitState.failures = 0;
-    circuitState.isOpen = false;
-    circuitState.lastFailure = 0;
-    set({ error: null });
-    console.info('Auth circuit breaker manually reset');
-  },
-  
-  circuitBreakerStatus: {
-    get isOpen() { return circuitState.isOpen; },
-    get failures() { return circuitState.failures; },
-    get canRetry() { return checkCircuitBreaker(); }
-  },
-  
   signIn: async (email, password) => {
     try {
       set({ isLoading: true, error: null });
       
-      // Check circuit breaker before proceeding
-      if (!checkCircuitBreaker()) {
-        const cooldownRemaining = Math.ceil((CIRCUIT_BREAKER.RESET_TIMEOUT - (Date.now() - circuitState.lastFailure)) / 1000);
-        throw new Error(`Too many authentication failures. Please try again in ${cooldownRemaining} seconds.`);
-      }
-      
-      const supabase = createClient();
-      
-      // Run quick diagnostics before attempting sign in
-      const diagnostics = await runSupabaseDiagnostics();
-      const { status, issues } = getDiagnosticSummary(diagnostics);
-      
-      if (status === 'error') {
-        recordFailure();
-        throw new Error(`Authentication service unavailable: ${issues.join(', ')}`);
-      }
-      
-      const response = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       });
       
-      if (response.error) {
-        // Only record certain types of failures that indicate service issues
-        if (response.error.message.includes('network') || 
-            response.error.message.includes('unavailable') ||
-            response.error.message.includes('configuration')) {
-          recordFailure();
-        }
-        
-        const { message, severity } = handleAuthError(response.error, { email });
-        set({ error: { message, severity } });
-        return response;
+      const result = await response.json();
+      
+      if (!response.ok) {
+        set({ error: result.error || 'Login failed. Please try again.' });
+        return {
+          error: { message: result.error } as AuthError,
+          data: { user: null, session: null }
+        };
       }
       
-      // Reset failures on success
-      circuitState.failures = 0;
+      // Atomic update to minimize re-renders
+      set(state => ({
+        ...state,
+        user: result.user,
+        session: result.session,
+        isAuthenticated: !!result.session,
+        error: null,
+      }));
       
-      if (response.data?.session) {
-        set({
-          user: response.data.user,
-          session: response.data.session,
-          isAuthenticated: true,
-          error: null,
-        });
-      }
-      
-      return response;
-    } catch (error) {
-      const { message, severity } = handleAuthError(error as Error, { email });
-      set({ error: { message, severity } });
       return {
-        error: error as AuthError,
+        error: null,
+        data: { 
+          user: result.user, 
+          session: result.session 
+        }
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+      set({ error: message });
+      return {
+        error: { message } as AuthError,
         data: { user: null, session: null }
       };
     } finally {
-      set({ isLoading: false });
+      set(state => ({ ...state, isLoading: false }));
     }
   },
   
@@ -173,291 +83,138 @@ export const useAuthStore = create<AuthState>()((set) => ({
     try {
       set({ isLoading: true, error: null });
       
-      // Check circuit breaker
-      if (!checkCircuitBreaker()) {
-        const cooldownRemaining = Math.ceil((CIRCUIT_BREAKER.RESET_TIMEOUT - (Date.now() - circuitState.lastFailure)) / 1000);
-        throw new Error(`Too many authentication failures. Please try again in ${cooldownRemaining} seconds.`);
-      }
-      
-      // Run diagnostics before signup attempt
-      const diagnostics = await runSupabaseDiagnostics();
-      const { status, issues, recommendations } = getDiagnosticSummary(diagnostics);
-      
-      if (status === 'error') {
-        recordFailure();
-        throw new Error(`Cannot create account: ${issues.join(', ')}. ${recommendations.join('. ')}`);
-      }
-      
-      const supabase = createClient();
-      if (!supabase) {
-        recordFailure();
-        throw new Error('Failed to initialize authentication service');
-      }
-      
-      // Log signup attempt for debugging
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Attempting signup:', { email, metaFields: Object.keys(meta) });
-      }
-      
-      const response = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: meta,
-          emailRedirectTo: `${window.location.origin}/login?verified=true`,
-        },
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, meta }),
       });
       
-      if (response.error) {
-        // Record infrastructure failures only
-        if (response.error.message.includes('network') || 
-            response.error.message.includes('unavailable') ||
-            response.error.message.includes('configuration')) {
-          recordFailure();
-        }
-        
-        const { message, severity } = handleAuthError(response.error, { email });
-        set({ error: { message, severity } });
-        return response;
+      const result = await response.json();
+      
+      if (!response.ok) {
+        set({ error: result.error || 'Signup failed. Please try again.' });
+        return {
+          error: { message: result.error } as AuthError,
+          data: { user: null, session: null }
+        };
       }
       
-      // Reset failures on success
-      circuitState.failures = 0;
+      // Atomic update to minimize re-renders
+      set(state => ({
+        ...state,
+        user: result.user,
+        session: result.session,
+        isAuthenticated: !!result.session,
+        error: null,
+      }));
       
-      if (response.data?.session) {
-        set({
-          user: response.data.user,
-          session: response.data.session,
-          isAuthenticated: true,
-          error: null,
-        });
-      }
-      
-      return response;
-    } catch (error) {
-      const { message, severity } = handleAuthError(error as Error, { email });
-      set({ error: { message, severity } });
       return {
-        error: error as AuthError,
+        error: null,
+        data: { 
+          user: result.user, 
+          session: result.session 
+        }
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+      set({ error: message });
+      return {
+        error: { message } as AuthError,
         data: { user: null, session: null }
       };
     } finally {
-      set({ isLoading: false });
+      set(state => ({ ...state, isLoading: false }));
     }
   },
   
   signOut: async () => {
     try {
-      set({ isLoading: true, error: null });
-      const supabase = createClient();
-      await supabase.auth.signOut();
-      set({
-        user: null,
-        session: null,
-        isAuthenticated: false,
+      set({ isLoading: true });
+      
+      await fetch('/api/auth/signout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
       });
+      
+      set(state => ({ 
+        ...state,
+        user: null, 
+        session: null, 
+        isAuthenticated: false 
+      }));
     } catch (error) {
-      const { message, severity } = handleAuthError(error as Error);
-      set({ error: { message, severity } });
+      console.error('Error signing out:', error);
     } finally {
-      set({ isLoading: false });
-    }
-  },
-  
-  refreshSession: async () => {
-    try {
-      // Don't attempt to refresh if circuit breaker is open
-      if (!checkCircuitBreaker()) {
-        console.warn('Auth circuit breaker open, skipping session refresh');
-        return;
-      }
-      
-      set({ isLoading: true });
-      const supabase = createClient();
-      
-      const { data, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        // Record infrastructure failures only
-        if (error.message.includes('network') || 
-            error.message.includes('unavailable') ||
-            error.message.includes('configuration')) {
-          recordFailure();
-        }
-        
-        const { message, severity } = handleAuthError(error);
-        set({ error: { message, severity } });
-        return;
-      }
-      
-      // Reset failures on success
-      circuitState.failures = 0;
-      
-      if (data?.session) {
-        set({
-          user: data.session.user,
-          session: data.session,
-          isAuthenticated: true,
-          error: null,
-        });
-      } else {
-        set({
-          user: null,
-          session: null,
-          isAuthenticated: false,
-          error: null,
-        });
-      }
-    } catch (error) {
-      // Only record certain failures
-      if ((error as Error).message.includes('network') || 
-          (error as Error).message.includes('unavailable') ||
-          (error as Error).message.includes('configuration')) {
-        recordFailure();
-      }
-      
-      const { message, severity } = handleAuthError(error as Error);
-      set({ error: { message, severity } });
-    } finally {
-      set({ isLoading: false });
-    }
-  },
-  
-  runDiagnostics: async () => {
-    try {
-      set({ isLoading: true });
-      const results = await runSupabaseDiagnostics();
-      
-      if (process.env.NODE_ENV === 'development') {
-        logDiagnosticResults(results);
-      }
-      
-      const { status, issues, recommendations } = getDiagnosticSummary(results);
-      
-      if (status !== 'healthy') {
-        set({
-          error: {
-            message: `Authentication service issues detected: ${issues.join(', ')}. ${recommendations.join('. ')}`,
-            severity: status === 'error' ? 'error' : 'warning'
-          }
-        });
-      }
-    } catch (error) {
-      const { message, severity } = handleAuthError(error as Error);
-      set({ error: { message, severity } });
-    } finally {
-      set({ isLoading: false });
+      set(state => ({ ...state, isLoading: false }));
     }
   },
 }));
 
-export const useAuth = () => {
-  const auth = useAuthStore();
-  const retryCountRef = useRef(0);
-  const maxRetries = 3;
+// Selectors to help with memoization
+const userSelector = (state: AuthState) => state.user;
+const sessionSelector = (state: AuthState) => state.session;
+const loadingSelector = (state: AuthState) => state.isLoading;
+const authenticatedSelector = (state: AuthState) => state.isAuthenticated;
+const errorSelector = (state: AuthState) => state.error;
+const signInSelector = (state: AuthState) => state.signIn;
+const signUpSelector = (state: AuthState) => state.signUp;
+const signOutSelector = (state: AuthState) => state.signOut;
+const clearErrorSelector = (state: AuthState) => state.clearError;
+
+export function useAuth() {
+  const [mounted, setMounted] = useState(false);
   
-  const initializeAuth = useCallback(async () => {
-    try {
-      // Check if we've already hit retry limits
-      if (retryCountRef.current >= maxRetries) {
-        console.warn(`Max auth initialization retries (${maxRetries}) reached`);
-        return;
-      }
-      
-      // Don't proceed if circuit breaker is open
-      if (!checkCircuitBreaker()) {
-        console.warn('Auth circuit breaker open, skipping initialization');
-        auth.error = {
-          message: `Authentication temporarily disabled after multiple failures. Please try again in ${Math.ceil(CIRCUIT_BREAKER.RESET_TIMEOUT / 1000)} seconds.`,
-          severity: 'error'
-        };
-        return;
-      }
-      
-      // Run diagnostics with exponential backoff on failure
-      await auth.runDiagnostics().catch(error => {
-        // Increment retry counter
-        retryCountRef.current++;
-        
-        // Schedule retry with exponential backoff
-        const backoffTime = Math.pow(CIRCUIT_BREAKER.BACKOFF_BASE, retryCountRef.current) * 1000;
-        console.warn(`Auth initialization failed, retrying in ${backoffTime}ms (attempt ${retryCountRef.current}/${maxRetries})`);
-        
-        setTimeout(() => {
-          initializeAuth();
-        }, backoffTime);
-        
-        throw error;
-      });
-      
-      // Only proceed with session refresh if diagnostics were OK
-      if (!auth.error || auth.error.severity !== 'error') {
-        await auth.refreshSession();
-        // Reset retry counter on success
-        retryCountRef.current = 0;
-      }
-    } catch (error) {
-      const { message, severity } = handleAuthError(error as Error);
-      auth.error = { message, severity };
-    }
-  }, [auth]);
+  // Use individual selectors to minimize rerenders
+  const user = useAuthStore(userSelector);
+  const session = useAuthStore(sessionSelector);
+  const isLoading = useAuthStore(loadingSelector);
+  const isAuthenticated = useAuthStore(authenticatedSelector);
+  const error = useAuthStore(errorSelector);
+  const signIn = useAuthStore(signInSelector);
+  const signUp = useAuthStore(signUpSelector);
+  const signOut = useAuthStore(signOutSelector);
+  const clearError = useAuthStore(clearErrorSelector);
   
   useEffect(() => {
+    // Only run this effect on the client
+    if (typeof window === 'undefined') return;
+    
     const initAuth = async () => {
-      // Only initialize if we haven't hit retry limits
-      if (retryCountRef.current < maxRetries) {
-        await initializeAuth();
+      try {
+        const response = await fetch('/api/auth/session');
+        const result = await response.json();
+        
+        if (response.ok && result.session) {
+          useAuthStore.setState(state => ({
+            ...state,
+            user: result.session.user,
+            session: result.session,
+            isAuthenticated: true,
+            isLoading: false
+          }));
+        } else {
+          useAuthStore.setState(state => ({ ...state, isLoading: false }));
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        useAuthStore.setState(state => ({ ...state, isLoading: false }));
       }
     };
     
     initAuth();
-    
-    // Set up auth state change listener with retry protection
-    let subscription: { unsubscribe: () => void } | null = null;
-    
-    try {
-      const supabase = createClient();
-      
-      if (supabase) {
-        const { data } = supabase.auth.onAuthStateChange(
-          async (event, session) => {
-            // Don't process events if circuit breaker is open
-            if (!checkCircuitBreaker()) {
-              console.warn('Auth circuit breaker open, ignoring auth state change event:', event);
-              return;
-            }
-            
-            try {
-              if (event === 'SIGNED_IN' && session) {
-                await auth.refreshSession();
-              }
-              
-              if (event === 'SIGNED_OUT') {
-                await auth.refreshSession();
-              }
-              
-              if (event === 'USER_UPDATED') {
-                await auth.refreshSession();
-              }
-            } catch (error) {
-              console.error('Error handling auth state change:', error);
-              // Don't retry here - just log the error
-            }
-          }
-        );
-        
-        subscription = data.subscription;
-      }
-    } catch (error) {
-      console.error('Failed to set up auth state change listener:', error);
-    }
-    
-    return () => {
-      if (subscription) {
-        subscription.unsubscribe();
-      }
-    };
-  }, [auth, initializeAuth]);
+    setMounted(true);
+  }, []);
   
-  return auth;
-}; 
+  // Don't expose store state until client-side hydration is complete
+  return {
+    user: mounted ? user : null,
+    session: mounted ? session : null,
+    isLoading: mounted ? isLoading : true,
+    isAuthenticated: mounted ? isAuthenticated : false,
+    error: mounted ? error : null,
+    signIn,
+    signUp,
+    signOut,
+    clearError
+  };
+} 

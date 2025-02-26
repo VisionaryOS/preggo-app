@@ -6,73 +6,182 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/hooks/useAuth';
 import { createClient } from '@/lib/supabase/client';
+import { useToast } from '@/components/ui/use-toast';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle, 
+  CardFooter 
+} from '@/components/ui/card';
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from '@/components/ui/tabs';
+import { 
+  Form, 
+  FormControl, 
+  FormDescription, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage 
+} from '@/components/ui/form';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Slider } from '@/components/ui/slider';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { motion } from 'framer-motion';
+import { CalendarIcon, User, Heart, Settings } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+
+// Interest options with emojis
+const interestOptions = [
+  { label: "Nutrition & Diet", value: "nutrition", emoji: "🥗" },
+  { label: "Exercise & Fitness", value: "exercise", emoji: "🧘‍♀️" },
+  { label: "Baby Development", value: "baby_development", emoji: "👶" },
+  { label: "Mental Wellbeing", value: "mental_wellbeing", emoji: "🧠" },
+  { label: "Sleep Tips", value: "sleep", emoji: "💤" },
+  { label: "Pregnancy Symptoms", value: "symptoms", emoji: "🤰" },
+];
+
+// Health condition options
+const healthConditions = [
+  { label: "None", value: "none" },
+  { label: "Diabetes", value: "diabetes" },
+  { label: "Hypertension", value: "hypertension" },
+  { label: "Thyroid issues", value: "thyroid" },
+  { label: "Anemia", value: "anemia" },
+  { label: "Anxiety/Depression", value: "anxiety_depression" },
+];
 
 const profileSchema = z.object({
   fullName: z.string().min(1, { message: 'Full name is required' }),
   email: z.string().email({ message: 'Invalid email address' }).optional(),
-  dueDate: z.string().optional(),
+  dueDate: z.date().optional(),
+  pregnancyWeek: z.number().min(0).max(42).optional().nullable(),
+  healthConditions: z.array(z.string()).default([]),
+  experience: z.enum(['first_time', 'experienced', 'multiple']).optional(),
+  interests: z.array(z.string()).default([]),
+  sleepQuality: z.number().min(1).max(5).optional().nullable(),
+  stressLevel: z.number().min(1).max(5).optional().nullable(),
+  notifications: z.boolean().default(true),
+  weeklyUpdates: z.boolean().default(true),
+  dailyTips: z.boolean().default(true),
+  dataCollection: z.boolean().default(true),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
 export default function ProfilePage() {
-  const { user, isLoading, refreshSession } = useAuth();
+  const { user, isLoading } = useAuth();
+  const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [activeTab, setActiveTab] = useState('personal');
+  const router = useRouter();
   
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm<ProfileFormValues>({
+  const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       fullName: '',
       email: '',
-      dueDate: '',
+      healthConditions: [],
+      interests: [],
+      notifications: true,
+      weeklyUpdates: true,
+      dailyTips: true,
+      dataCollection: true,
     },
   });
 
+  // Load user data
   useEffect(() => {
     if (user) {
-      reset({
+      form.reset({
         fullName: user.user_metadata?.full_name || '',
         email: user.email || '',
-        dueDate: user.user_metadata?.due_date || '',
+        dueDate: user.user_metadata?.due_date ? new Date(user.user_metadata.due_date) : undefined,
+        pregnancyWeek: user.user_metadata?.pregnancy_week || null,
+        healthConditions: user.user_metadata?.health_conditions || [],
+        experience: user.user_metadata?.experience as any || undefined,
+        interests: user.user_metadata?.interests || [],
+        sleepQuality: user.user_metadata?.sleep_quality || null,
+        stressLevel: user.user_metadata?.stress_level || null,
+        notifications: user.user_metadata?.preferences?.notifications ?? true,
+        weeklyUpdates: user.user_metadata?.preferences?.weekly_updates ?? true,
+        dailyTips: user.user_metadata?.preferences?.daily_tips ?? true,
+        dataCollection: user.user_metadata?.preferences?.data_collection ?? true,
       });
     }
-  }, [user, reset]);
+  }, [user, form]);
 
   const onSubmit = async (data: ProfileFormValues) => {
     if (!user) return;
     
     setIsSaving(true);
-    setMessage(null);
     
     try {
       const supabase = createClient();
       
-      const { error } = await supabase.auth.updateUser({
-        email: data.email !== user.email ? data.email : undefined,
-        data: {
-          full_name: data.fullName,
-          due_date: data.dueDate || null,
-        },
-      });
+      // Format data for Supabase
+      const profileData = {
+        full_name: data.fullName,
+        due_date: data.dueDate ? data.dueDate.toISOString().split('T')[0] : null,
+        pregnancy_week: data.pregnancyWeek,
+        health_conditions: data.healthConditions,
+        experience: data.experience,
+        interests: data.interests,
+        sleep_quality: data.sleepQuality,
+        stress_level: data.stressLevel,
+        preferences: {
+          notifications: data.notifications,
+          weekly_updates: data.weeklyUpdates,
+          daily_tips: data.dailyTips,
+          data_collection: data.dataCollection,
+        }
+      };
+      
+      // If email changed, update it
+      const updateData: any = { data: profileData };
+      if (data.email !== user.email) {
+        updateData.email = data.email;
+      }
+      
+      // Update user metadata
+      const { error } = await supabase.auth.updateUser(updateData);
       
       if (error) throw error;
       
-      await refreshSession();
-      
-      setMessage({
-        type: 'success',
-        text: 'Profile updated successfully!',
+      toast({
+        title: "Profile saved",
+        description: "Your profile has been updated successfully!",
       });
-    } catch (error: Error | unknown) {
-      setMessage({
-        type: 'error',
-        text: error instanceof Error ? error.message : 'An error occurred while updating your profile',
+      
+      // Refresh data
+      setTimeout(() => {
+        router.refresh();
+      }, 1000);
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      
+      toast({
+        title: "Error saving profile",
+        description: error instanceof Error ? error.message : "There was a problem saving your profile",
+        variant: "destructive",
       });
     } finally {
       setIsSaving(false);
@@ -81,93 +190,466 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen p-6 bg-gray-50">
-      <div className="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6">Your Profile</h1>
-        
-        {message && (
-          <div 
-            className={`mb-4 p-3 rounded ${
-              message.type === 'success' 
-                ? 'bg-green-100 border border-green-400 text-green-700' 
-                : 'bg-red-100 border border-red-400 text-red-700'
-            }`}
-          >
-            {message.text}
-          </div>
-        )}
-        
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
-              Full Name
-            </label>
-            <input
-              id="fullName"
-              type="text"
-              {...register('fullName')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              disabled={isSaving}
-            />
-            {errors.fullName && (
-              <p className="mt-1 text-sm text-red-600">{errors.fullName.message}</p>
-            )}
-          </div>
-          
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              {...register('email')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-100"
-              disabled={true}
-            />
-            <p className="mt-1 text-xs text-gray-500">
-              Email cannot be changed due to verification requirements
-            </p>
-          </div>
-          
-          <div>
-            <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 mb-1">
-              Expected Due Date (Optional)
-            </label>
-            <input
-              id="dueDate"
-              type="date"
-              {...register('dueDate')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              disabled={isSaving}
-            />
-          </div>
-          
-          <div className="flex justify-between pt-4">
-            <button
-              type="button"
-              onClick={() => window.history.back()}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+    <div className="container max-w-4xl py-10">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold">Your Profile</h1>
+          <p className="text-gray-600 mt-2">
+            Manage your personal information and preferences
+          </p>
+        </div>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <Tabs 
+              defaultValue="personal" 
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className="w-full"
             >
-              Back
-            </button>
-            <button
-              type="submit"
-              disabled={isSaving}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSaving ? 'Saving...' : 'Save Changes'}
-            </button>
-          </div>
-        </form>
-      </div>
+              <TabsList className="grid grid-cols-3 mb-8">
+                <TabsTrigger value="personal" className="flex items-center">
+                  <User className="h-4 w-4 mr-2" />
+                  Personal
+                </TabsTrigger>
+                <TabsTrigger value="health" className="flex items-center">
+                  <Heart className="h-4 w-4 mr-2" />
+                  Health
+                </TabsTrigger>
+                <TabsTrigger value="preferences" className="flex items-center">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Preferences
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="personal" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Personal Information</CardTitle>
+                    <CardDescription>
+                      Update your basic profile information
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <FormField
+                      control={form.control}
+                      name="fullName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Full Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Your name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input placeholder="your.email@example.com" {...field} />
+                          </FormControl>
+                          <FormDescription>
+                            This is your login email address
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="dueDate"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Due Date</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  className="pl-3 text-left font-normal flex justify-between"
+                                >
+                                  {field.value ? (
+                                    format(field.value, "MMMM d, yyyy")
+                                  ) : (
+                                    <span className="text-gray-500">Select due date</span>
+                                  )}
+                                  <CalendarIcon className="h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormDescription>
+                            Your expected delivery date
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="experience"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Pregnancy Experience</FormLabel>
+                          <Select 
+                            onValueChange={field.onChange} 
+                            value={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select your experience" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="first_time">First-time parent 🌱</SelectItem>
+                              <SelectItem value="experienced">Experienced parent 👶</SelectItem>
+                              <SelectItem value="multiple">Expecting multiples 👯</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            This helps us tailor content based on your experience
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="interests"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Interests</FormLabel>
+                          <FormDescription className="mb-4">
+                            Select topics you'd like to see more content about
+                          </FormDescription>
+                          <div className="grid grid-cols-2 gap-3">
+                            {interestOptions.map(interest => (
+                              <Card 
+                                key={interest.value}
+                                className={`cursor-pointer border transition-all ${
+                                  field.value?.includes(interest.value) 
+                                    ? 'border-primary bg-primary/5' 
+                                    : 'border-gray-200 hover:border-gray-300'
+                                }`}
+                                onClick={() => {
+                                  const currentValues = new Set(field.value || []);
+                                  if (currentValues.has(interest.value)) {
+                                    currentValues.delete(interest.value);
+                                  } else {
+                                    currentValues.add(interest.value);
+                                  }
+                                  field.onChange(Array.from(currentValues));
+                                }}
+                              >
+                                <CardContent className="flex items-center p-3">
+                                  <div className="text-xl mr-3">{interest.emoji}</div>
+                                  <span className="text-sm font-medium">{interest.label}</span>
+                                </CardContent>
+                              </Card>
+                            ))}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="health" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Health Information</CardTitle>
+                    <CardDescription>
+                      Information to help personalize your health insights
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <FormField
+                      control={form.control}
+                      name="pregnancyWeek"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Current Pregnancy Week</FormLabel>
+                          <FormControl>
+                            <div className="flex items-center gap-2">
+                              <Slider
+                                value={field.value !== undefined && field.value !== null ? [field.value] : [0]}
+                                min={0}
+                                max={42}
+                                step={1}
+                                onValueChange={(value) => field.onChange(value[0])}
+                                className="flex-1"
+                              />
+                              <div className="w-12 text-center font-medium">
+                                {field.value !== undefined && field.value !== null ? field.value : '?'}
+                              </div>
+                            </div>
+                          </FormControl>
+                          <FormDescription>
+                            This helps us show you relevant content for your stage
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="healthConditions"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Health Conditions</FormLabel>
+                          <FormDescription className="mb-3">
+                            Select any pre-existing conditions for more relevant guidance
+                          </FormDescription>
+                          <div className="grid grid-cols-2 gap-3">
+                            {healthConditions.map(condition => (
+                              <div
+                                key={condition.value}
+                                className={`border rounded-md p-3 cursor-pointer ${
+                                  field.value?.includes(condition.value)
+                                    ? 'border-primary bg-primary/5'
+                                    : 'border-gray-200'
+                                }`}
+                                onClick={() => {
+                                  const currentValues = new Set(field.value || []);
+                                  if (currentValues.has(condition.value)) {
+                                    currentValues.delete(condition.value);
+                                  } else {
+                                    currentValues.add(condition.value);
+                                  }
+                                  field.onChange(Array.from(currentValues));
+                                }}
+                              >
+                                <div className="flex items-center">
+                                  <span className="text-sm font-medium">{condition.label}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="sleepQuality"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Sleep Quality</FormLabel>
+                            <FormDescription>
+                              How well are you sleeping?
+                            </FormDescription>
+                            <div className="flex justify-between mt-2 mb-1 text-gray-500 text-xs">
+                              <span>Poor</span>
+                              <span>Excellent</span>
+                            </div>
+                            <FormControl>
+                              <div className="flex items-center gap-2">
+                                <Slider
+                                  value={field.value !== undefined && field.value !== null ? [field.value] : [3]}
+                                  min={1}
+                                  max={5}
+                                  step={1}
+                                  onValueChange={(value) => field.onChange(value[0])}
+                                />
+                                <div className="w-8 text-center font-medium">
+                                  {field.value !== undefined && field.value !== null ? field.value : 3}/5
+                                </div>
+                              </div>
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="stressLevel"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Stress Level</FormLabel>
+                            <FormDescription>
+                              How stressed do you feel?
+                            </FormDescription>
+                            <div className="flex justify-between mt-2 mb-1 text-gray-500 text-xs">
+                              <span>Low</span>
+                              <span>High</span>
+                            </div>
+                            <FormControl>
+                              <div className="flex items-center gap-2">
+                                <Slider
+                                  value={field.value !== undefined && field.value !== null ? [field.value] : [3]}
+                                  min={1}
+                                  max={5}
+                                  step={1}
+                                  onValueChange={(value) => field.onChange(value[0])}
+                                />
+                                <div className="w-8 text-center font-medium">
+                                  {field.value !== undefined && field.value !== null ? field.value : 3}/5
+                                </div>
+                              </div>
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="preferences" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>App Preferences</CardTitle>
+                    <CardDescription>
+                      Customize your app experience
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <FormField
+                      control={form.control}
+                      name="notifications"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between space-y-0 rounded-lg border p-4">
+                          <div className="space-y-1">
+                            <FormLabel className="text-base">Push Notifications</FormLabel>
+                            <FormDescription>
+                              Receive timely reminders and updates
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="weeklyUpdates"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between space-y-0 rounded-lg border p-4">
+                          <div className="space-y-1">
+                            <FormLabel className="text-base">Weekly Updates</FormLabel>
+                            <FormDescription>
+                              Get weekly summaries of your pregnancy journey
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="dailyTips"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between space-y-0 rounded-lg border p-4">
+                          <div className="space-y-1">
+                            <FormLabel className="text-base">Daily Tips</FormLabel>
+                            <FormDescription>
+                              Receive daily pregnancy tips and advice
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="dataCollection"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between space-y-0 rounded-lg border p-4">
+                          <div className="space-y-1">
+                            <FormLabel className="text-base">Data Collection</FormLabel>
+                            <FormDescription>
+                              Allow anonymous data collection to improve your experience
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+
+            <div className="flex justify-end space-x-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => router.push('/dashboard')}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={isSaving}
+              >
+                {isSaving ? (
+                  <>
+                    <div className="h-4 w-4 border-t-2 border-r-2 border-white rounded-full animate-spin mr-2" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save Changes"
+                )}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </motion.div>
     </div>
   );
 } 
