@@ -1,7 +1,8 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Button, Card, Title, Text } from '@tremor/react';
+import { Card, Title, Text } from '@tremor/react';
+import Link from 'next/link';
 
 const HeroSection = () => {
   return (
@@ -47,20 +48,16 @@ const HeroSection = () => {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="flex flex-col sm:flex-row justify-center gap-4"
           >
-            <Button 
-              size="lg"
-              variant="primary" 
-              className="bg-indigo-600 hover:bg-indigo-700 shadow-lg"
-            >
-              Start Your Journey Free ✨
-            </Button>
-            <Button 
-              size="lg"
-              variant="secondary"
-              className="border-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
-            >
-              See How It Works 📱
-            </Button>
+            <div className="rounded-md shadow">
+              <Link href="/signup" className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10">
+                Get started
+              </Link>
+            </div>
+            <div className="mt-3 sm:mt-0 sm:ml-3">
+              <Link href="/login" className="w-full flex items-center justify-center px-8 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-10">
+                Login
+              </Link>
+            </div>
           </motion.div>
           
           {/* Trust indicators */}
