@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "deploy": "vercel",
-    "prepare": "husky",
+    "prepare": "node -e \"try{require('fs').statSync('.git');process.exit(0)}catch(e){process.exit(1)}\" && husky",
     "lint:fix": "next lint --fix"
   },
   "dependencies": {
