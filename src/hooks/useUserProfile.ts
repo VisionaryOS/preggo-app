@@ -33,7 +33,7 @@ export function useUserProfile() {
       try {
         const supabase = await createClientWithRetry();
         const { data, error } = await supabase
-          .from('profiles')
+          .from('users')
           .select('*')
           .eq('id', userId)
           .single();
@@ -64,7 +64,7 @@ export function useUserProfile() {
       try {
         const supabase = await createClientWithRetry();
         const { data, error } = await supabase
-          .from('profiles')
+          .from('users')
           .update(profileData)
           .eq('id', userId)
           .select('*')

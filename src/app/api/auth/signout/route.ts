@@ -1,9 +1,9 @@
-import { createServerClient } from '@/lib/supabase/server';
+import { createAPIRouteClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
 export async function POST() {
   try {
-    const supabase = createServerClient();
+    const supabase = createAPIRouteClient();
     
     const { error } = await supabase.auth.signOut();
     

@@ -12,26 +12,44 @@ export interface Database {
       users: {
         Row: {
           id: string
-          created_at: string
           email: string
           full_name: string | null
           due_date: string | null
+          pregnancy_week: number | null
+          health_conditions: string[] | null
+          interests: string[] | null
+          ai_personalization: Json | null
+          preferences: Json | null
+          onboarding_completed: boolean | null
+          created_at: string
           last_updated: string
         }
         Insert: {
           id: string
-          created_at?: string
           email: string
           full_name?: string | null
           due_date?: string | null
+          pregnancy_week?: number | null
+          health_conditions?: string[] | null
+          interests?: string[] | null
+          ai_personalization?: Json | null
+          preferences?: Json | null
+          onboarding_completed?: boolean | null
+          created_at?: string
           last_updated?: string
         }
         Update: {
           id?: string
-          created_at?: string
           email?: string
           full_name?: string | null
           due_date?: string | null
+          pregnancy_week?: number | null
+          health_conditions?: string[] | null
+          interests?: string[] | null
+          ai_personalization?: Json | null
+          preferences?: Json | null
+          onboarding_completed?: boolean | null
+          created_at?: string
           last_updated?: string
         }
         Relationships: [

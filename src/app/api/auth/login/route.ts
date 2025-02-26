@@ -1,4 +1,4 @@
-import { createServerClient } from '@/lib/supabase/server';
+import { createAPIRouteClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const supabase = createServerClient();
+    const supabase = createAPIRouteClient();
     
     const { data, error } = await supabase.auth.signInWithPassword({
       email,

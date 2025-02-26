@@ -1,9 +1,9 @@
-import { createServerClient } from '@/lib/supabase/server';
+import { createAPIRouteClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const supabase = createServerClient();
+    const supabase = createAPIRouteClient();
     
     const { data, error } = await supabase.auth.getSession();
     
