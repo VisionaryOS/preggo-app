@@ -1,89 +1,84 @@
-# PregnancyPal - Pregnancy Tracking Web App
+# MomCare - Pregnancy Support Web App
 
-A comprehensive pregnancy tracking web application built with Next.js, featuring AI-powered assistance, week-by-week tracking, symptom monitoring, and personalized guidance.
+MomCare is a comprehensive web application designed to support women throughout their pregnancy journey with features like pregnancy tracking, nutrition guidance, health monitoring, and community support.
 
-## Features
+## 🌟 Features
 
-- **User Authentication**: Secure login, registration, and profile management
-- **Pregnancy Dashboard**: Visual tracking of pregnancy progress and milestones
-- **Week-by-Week Content**: Detailed information on baby development and maternal changes
-- **Symptom Tracker**: Log and monitor pregnancy symptoms over time
-- **AI Assistant**: Personalized guidance and answers to pregnancy questions
-- **Educational Content**: Comprehensive pregnancy information and resources
+- **Week-by-Week Pregnancy Tracker**: Follow your baby's development with detailed insights
+- **Nutrition Guide**: Personalized meal plans and nutrition advice for each trimester
+- **Safe Exercise Plans**: Stay active with routines designed specifically for pregnant women
+- **Mom Community**: Connect with other expecting mothers at similar stages
+- **Health Monitoring**: Track important health metrics throughout your pregnancy
+- **Expert Advice**: Access to articles, videos, and tips from pregnancy specialists
 
-## Tech Stack
-
-- **Frontend**: Next.js 14, React, TypeScript
-- **Styling**: TailwindCSS, shadcn/ui components
-- **Authentication**: Supabase Auth
-- **Database**: Supabase Postgres
-- **AI Integration**: OpenAI API
-- **Form Handling**: React Hook Form + Zod
-- **Date Utilities**: date-fns
-- **UI Animation**: Framer Motion
-
-## Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js 18 or higher
+- Node.js 18.0.0 or higher
 - npm or yarn
 
 ### Installation
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/pregnancy-app.git
-   cd pregnancy-app
+   git clone https://github.com/yourusername/momcare-app.git
+   cd momcare-app
    ```
 
 2. Install dependencies:
    ```bash
    npm install
+   # or
+   yarn install
    ```
 
-3. Set up environment variables:
-   Create a `.env.local` file in the root directory with the following variables:
-   ```
-   # Supabase
-   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-
-   # OpenAI
-   NEXT_PUBLIC_OPENAI_API_KEY=your_openai_api_key
-
-   # App Configuration
-   NEXT_PUBLIC_APP_URL=http://localhost:3000
-   NEXT_PUBLIC_APP_NAME=PregnancyPal
-   ```
-
-4. Run the development server:
+3. Run the development server:
    ```bash
    npm run dev
+   # or
+   yarn dev
    ```
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+4. Open your browser and navigate to `http://localhost:3000`
 
-## Project Structure
+## 🛠️ Built With
 
-- `app/`: Next.js App Router pages and layout
-- `components/`: Reusable React components
-- `lib/`: Utility functions and services
-- `types/`: TypeScript type definitions
+- [Next.js](https://nextjs.org/) - React framework for production
+- [TypeScript](https://www.typescriptlang.org/) - For type safety
+- [Tailwind CSS](https://tailwindcss.com/) - For styling
+- [Framer Motion](https://www.framer.com/motion/) - For animations
 
-## Features in Development
+## 📦 Project Structure
 
-- Google Calendar integration for appointments
-- Email notifications for milestones
-- Mobile app version
-- Community forums and sharing features
-- Integration with healthcare provider systems
+```
+/
+├── src/                    # Source code
+│   ├── app/                # Next.js app directory
+│   │   ├── layout/         # Layout components (Navbar, Footer)
+│   │   └── ui/             # UI components
+│   └── ...
+├── public/                 # Static assets
+└── ...
+```
 
-## Contributing
+## 🔜 Future Features
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+- User authentication and profiles
+- Personalized content based on pregnancy stage
+- Healthcare provider integration
+- Pregnancy journal and photo memories
+- Baby kick counter and contraction timer
+- Appointment scheduler and reminders
 
-## License
+## 📝 License
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 📧 Contact
+
+For any questions or inquiries, please reach out to support@momcare-app.com
+
+---
+
+Made with ❤️ for mothers everywhere

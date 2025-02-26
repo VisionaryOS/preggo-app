@@ -1,30 +1,48 @@
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import './globals.css'
-import Header from '@/components/layout/header'
-import { Toaster } from '@/components/ui/toaster'
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import "./globals.css";
 
-const inter = Inter({ subsets: ['latin'] })
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
-  title: 'PregnancyPal - Your Personalized Pregnancy Assistant',
-  description: 'Track your pregnancy journey with personalized guidance, week-by-week updates, symptom tracking, and AI-powered assistance.',
-}
+  title: "MomCare - Support for Your Pregnancy Journey",
+  description: "A comprehensive app for pregnant women offering guidance, tracking, and community support throughout your pregnancy journey.",
+  keywords: ["pregnancy", "pregnant", "mom", "baby", "health", "tracking", "prenatal care"],
+  openGraph: {
+    title: "MomCare - Support for Your Pregnancy Journey",
+    description: "A comprehensive app for pregnant women offering guidance, tracking, and community support throughout your pregnancy journey.",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "MomCare App",
+      }
+    ],
+    type: "website",
+  },
+};
 
 export default function RootLayout({
   children,
-}: {
-  children: React.ReactNode
-}) {
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
-        <div className="relative flex min-h-screen flex-col">
-          <Header />
-          <div className="flex-1">{children}</div>
-        </div>
-        <Toaster />
+    <html lang="en" className="scroll-smooth">
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        {children}
       </body>
     </html>
-  )
-} 
+  );
+}
