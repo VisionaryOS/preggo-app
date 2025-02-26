@@ -1,116 +1,161 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { motion } from 'framer-motion';
-import { Menu, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const navigation = [
+  { name: 'Home', href: '#', emoji: '🏠' },
+  { name: 'Features', href: '#features', emoji: '✨' },
+  { name: 'Testimonials', href: '#testimonials', emoji: '💬' },
+  { name: 'FAQ', href: '#faq', emoji: '❓' },
+];
 
 const Navbar = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <nav className="fixed top-0 left-0 w-full bg-white/80 backdrop-blur-md z-50 shadow-sm">
+    <nav
+      className={`fixed w-full z-50 transition-all duration-300 ${
+        isScrolled ? 'bg-white shadow-md py-2' : 'bg-transparent py-4'
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex-shrink-0 flex items-center">
-            <Link href="/" className="flex items-center gap-2">
-              <span className="h-8 w-8 rounded-full bg-[rgb(var(--color-primary))] flex items-center justify-center">
-                <span className="text-white font-bold">M</span>
-              </span>
-              <span className="text-xl font-semibold text-[rgb(var(--color-primary))]">MomCare</span>
+        <div className="flex justify-between items-center">
+          {/* Logo */}
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            className="flex-shrink-0"
+          >
+            <Link href="/" className="flex items-center">
+              <span className="text-2xl mr-2">👶</span>
+              <span className="font-bold text-xl text-indigo-900">MomCare</span>
             </Link>
+          </motion.div>
+          
+          {/* Desktop navigation */}
+          <div className="hidden md:flex items-center space-x-8">
+            {navigation.map((item) => (
+              <motion.div
+                key={item.name}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <Link
+                  href={item.href}
+                  className="flex items-center text-gray-600 hover:text-indigo-700 font-medium transition-colors"
+                >
+                  <span className="mr-1">{item.emoji}</span>
+                  {item.name}
+                </Link>
+              </motion.div>
+            ))}
           </div>
           
-          {/* Desktop menu */}
-          <div className="hidden md:flex items-center space-x-8">
-            <Link href="#features" className="text-gray-700 hover:text-[rgb(var(--color-primary))] transition-colors">
-              Features
-            </Link>
-            <Link href="#how-it-works" className="text-gray-700 hover:text-[rgb(var(--color-primary))] transition-colors">
-              How It Works
-            </Link>
-            <Link href="#testimonials" className="text-gray-700 hover:text-[rgb(var(--color-primary))] transition-colors">
-              Testimonials
-            </Link>
-            <Link href="#faq" className="text-gray-700 hover:text-[rgb(var(--color-primary))] transition-colors">
-              FAQ
-            </Link>
-            <Link href="#contact" className="btn-primary">
-              Get Started
-            </Link>
+          {/* CTA Buttons */}
+          <div className="hidden md:flex items-center space-x-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <Link
+                href="#login"
+                className="text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+              >
+                Log in
+              </Link>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <Link
+                href="#get-started"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
+              >
+                Get Started Free
+              </Link>
+            </motion.div>
           </div>
           
           {/* Mobile menu button */}
-          <div className="md:hidden flex items-center">
+          <div className="md:hidden">
             <button
-              onClick={toggleMenu}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-[rgb(var(--color-primary))] focus:outline-none"
-              aria-expanded="false"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="text-gray-600 hover:text-indigo-700 focus:outline-none"
+              aria-expanded={isMobileMenuOpen}
             >
-              <span className="sr-only">Open main menu</span>
-              {isMenuOpen ? (
-                <X className="block h-6 w-6" aria-hidden="true" />
+              {isMobileMenuOpen ? (
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               ) : (
-                <Menu className="block h-6 w-6" aria-hidden="true" />
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
               )}
             </button>
           </div>
         </div>
       </div>
       
-      {/* Mobile menu, show/hide based on menu state */}
-      {isMenuOpen && (
-        <motion.div 
-          className="md:hidden bg-white shadow-xl"
-          initial={{ height: 0, opacity: 0 }}
-          animate={{ height: 'auto', opacity: 1 }}
-          exit={{ height: 0, opacity: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <Link 
-              href="#features" 
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-[rgb(var(--color-primary))] hover:bg-gray-50"
-              onClick={toggleMenu}
-            >
-              Features
-            </Link>
-            <Link 
-              href="#how-it-works" 
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-[rgb(var(--color-primary))] hover:bg-gray-50"
-              onClick={toggleMenu}
-            >
-              How It Works
-            </Link>
-            <Link 
-              href="#testimonials" 
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-[rgb(var(--color-primary))] hover:bg-gray-50"
-              onClick={toggleMenu}
-            >
-              Testimonials
-            </Link>
-            <Link 
-              href="#faq" 
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-[rgb(var(--color-primary))] hover:bg-gray-50"
-              onClick={toggleMenu}
-            >
-              FAQ
-            </Link>
-            <Link 
-              href="#contact" 
-              className="block px-3 py-2 rounded-md text-base font-medium bg-[rgb(var(--color-primary))] text-white"
-              onClick={toggleMenu}
-            >
-              Get Started
-            </Link>
-          </div>
-        </motion.div>
-      )}
+      {/* Mobile menu */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="md:hidden bg-white shadow-lg overflow-hidden"
+          >
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+              {navigation.map((item) => (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-indigo-700 hover:bg-indigo-50"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <span className="mr-2">{item.emoji}</span>
+                  {item.name}
+                </Link>
+              ))}
+              <div className="pt-4 pb-2 border-t border-gray-200">
+                <Link
+                  href="#login"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-indigo-600 hover:text-indigo-800"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Log in
+                </Link>
+                <Link
+                  href="#get-started"
+                  className="block px-3 py-2 mt-1 rounded-md text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Get Started Free
+                </Link>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 };

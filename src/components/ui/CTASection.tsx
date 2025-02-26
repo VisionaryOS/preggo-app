@@ -1,86 +1,159 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import Link from 'next/link';
+import { Card, Title, Text, Grid, Col, Button, Metric, Divider } from '@tremor/react';
 
 const CTASection = () => {
   return (
-    <section id="get-started" className="py-24 relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute right-0 top-1/4 w-1/3 h-1/3 bg-[rgba(var(--color-primary),0.08)] rounded-full blur-3xl transform translate-x-1/2"></div>
-        <div className="absolute left-0 bottom-1/4 w-1/3 h-1/3 bg-[rgba(var(--color-secondary),0.08)] rounded-full blur-3xl transform -translate-x-1/2"></div>
-      </div>
-      
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-2xl overflow-hidden shadow-xl">
-          <div className="px-6 py-12 sm:px-12 sm:py-16 md:py-20 md:px-16 lg:flex lg:items-center">
-            <div className="lg:w-2/3 lg:pr-12">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5 }}
-              >
-                <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
-                  <span className="block">Ready to start your</span>
-                  <span className="block text-[rgb(var(--color-primary))]">pregnancy journey with expert guidance?</span>
-                </h2>
-                <p className="mt-4 text-lg leading-6 text-gray-500">
-                  Join thousands of expecting mothers who use MomCare to navigate their pregnancy with confidence. 
-                  Sign up today for free and get access to all our features.
-                </p>
-                <div className="mt-8 space-y-4 sm:flex sm:space-y-0 sm:space-x-4">
-                  <Link href="#signup" className="btn-primary block text-center sm:inline-flex sm:items-center sm:justify-center">
-                    Get Started Free
-                  </Link>
-                  <Link href="#contact" className="btn-secondary block text-center sm:inline-flex sm:items-center sm:justify-center">
-                    Contact Support
-                  </Link>
+    <section id="get-started" className="py-24 bg-indigo-50">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="text-center mb-12"
+        >
+          <Title className="text-3xl sm:text-4xl font-bold text-indigo-900">
+            Start Your Motherhood Journey Today
+          </Title>
+          <Text className="mt-4 text-xl text-gray-600 max-w-3xl mx-auto">
+            Join thousands of mothers who trust our app to guide them through every step of pregnancy and early motherhood.
+          </Text>
+        </motion.div>
+
+        <Grid numItems={1} numItemsMd={2} className="gap-8">
+          <Col>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+            >
+              <Card className="h-full">
+                <div className="flex items-center mb-4">
+                  <div className="text-4xl mr-3">🎁</div>
+                  <Title>Free Plan</Title>
                 </div>
-              </motion.div>
+                <Divider />
+                <Metric className="my-4">$0 <span className="text-sm font-normal text-gray-500">/month</span></Metric>
+                <div className="space-y-4 mb-8">
+                  <div className="flex items-start">
+                    <span className="text-green-500 mr-2">✓</span>
+                    <Text>Week-by-week pregnancy tracking</Text>
+                  </div>
+                  <div className="flex items-start">
+                    <span className="text-green-500 mr-2">✓</span>
+                    <Text>Basic health monitoring</Text>
+                  </div>
+                  <div className="flex items-start">
+                    <span className="text-green-500 mr-2">✓</span>
+                    <Text>Community forums access</Text>
+                  </div>
+                  <div className="flex items-start">
+                    <span className="text-green-500 mr-2">✓</span>
+                    <Text>Essential pregnancy information</Text>
+                  </div>
+                </div>
+                <Button 
+                  size="lg"
+                  variant="primary"
+                  className="w-full bg-indigo-600 hover:bg-indigo-700"
+                >
+                  Get Started Free ✨
+                </Button>
+              </Card>
+            </motion.div>
+          </Col>
+
+          <Col>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
+              <Card className="h-full border-2 border-indigo-200 relative">
+                <div className="absolute -top-4 right-4 bg-indigo-600 text-white px-3 py-1 rounded-full text-sm font-medium">
+                  Most Popular 💖
+                </div>
+                <div className="flex items-center mb-4">
+                  <div className="text-4xl mr-3">👑</div>
+                  <Title>Premium Plan</Title>
+                </div>
+                <Divider />
+                <Metric className="my-4">$4.99 <span className="text-sm font-normal text-gray-500">/month</span></Metric>
+                <div className="space-y-4 mb-8">
+                  <div className="flex items-start">
+                    <span className="text-green-500 mr-2">✓</span>
+                    <Text><span className="font-medium">Everything in Free plan, plus:</span></Text>
+                  </div>
+                  <div className="flex items-start">
+                    <span className="text-indigo-500 mr-2">✓</span>
+                    <Text>Personalized nutrition & meal plans</Text>
+                  </div>
+                  <div className="flex items-start">
+                    <span className="text-indigo-500 mr-2">✓</span>
+                    <Text>Direct Q&A with pregnancy experts</Text>
+                  </div>
+                  <div className="flex items-start">
+                    <span className="text-indigo-500 mr-2">✓</span>
+                    <Text>Advanced health analytics & insights</Text>
+                  </div>
+                  <div className="flex items-start">
+                    <span className="text-indigo-500 mr-2">✓</span>
+                    <Text>Ad-free experience with premium content</Text>
+                  </div>
+                </div>
+                <Button 
+                  size="lg"
+                  variant="primary"
+                  className="w-full bg-indigo-600 hover:bg-indigo-700"
+                >
+                  Try Premium Free for 7 Days ✨
+                </Button>
+                <Text className="text-center text-sm mt-3 text-gray-500">
+                  No credit card required for trial
+                </Text>
+              </Card>
+            </motion.div>
+          </Col>
+        </Grid>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="mt-16 text-center"
+        >
+          <Text className="text-gray-600 max-w-xl mx-auto mb-6">
+            Join over 10,000 mothers who have trusted our app to support them through their pregnancy journey. Download now and start experiencing the difference.
+          </Text>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="flex items-center space-x-2">
+              <div className="text-2xl">📱</div>
+              <div className="text-left">
+                <Text className="font-medium">iOS & Android</Text>
+                <Text className="text-sm text-gray-500">Available on all devices</Text>
+              </div>
             </div>
-            <div className="mt-10 lg:mt-0 lg:w-1/3">
-              <motion.div
-                className="bg-[rgba(var(--color-primary),0.1)] rounded-xl p-6"
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                <div className="text-center">
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Sign up for updates</h3>
-                  <p className="text-sm text-gray-500 mb-6">
-                    Stay informed about new features and pregnancy resources.
-                  </p>
-                  <form className="space-y-4">
-                    <div>
-                      <label htmlFor="email" className="sr-only">Email address</label>
-                      <input
-                        id="email"
-                        name="email"
-                        type="email"
-                        autoComplete="email"
-                        required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-[rgb(var(--color-primary))] focus:border-[rgb(var(--color-primary))] placeholder-gray-400"
-                        placeholder="Enter your email"
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      className="w-full bg-[rgb(var(--color-primary))] text-white rounded-lg px-4 py-3 font-medium hover:bg-[rgb(var(--color-primary))] hover:opacity-90 transition-opacity"
-                    >
-                      Subscribe
-                    </button>
-                  </form>
-                  <p className="mt-4 text-xs text-gray-500">
-                    We respect your privacy. Unsubscribe at any time.
-                  </p>
-                </div>
-              </motion.div>
+            <div className="flex items-center space-x-2">
+              <div className="text-2xl">🔒</div>
+              <div className="text-left">
+                <Text className="font-medium">Secure & Private</Text>
+                <Text className="text-sm text-gray-500">Your data stays private</Text>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="text-2xl">❤️</div>
+              <div className="text-left">
+                <Text className="font-medium">Expert Support</Text>
+                <Text className="text-sm text-gray-500">Backed by professionals</Text>
+              </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

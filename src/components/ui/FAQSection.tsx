@@ -1,107 +1,124 @@
 'use client';
 
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Card, Title, Text, Accordion, AccordionHeader, AccordionBody, AccordionList } from '@tremor/react';
 
-const faqs = [
+interface FAQ {
+  question: string;
+  answer: string;
+  emoji: string;
+}
+
+const faqs: FAQ[] = [
   {
-    id: 1,
-    question: "Is this app suitable for all stages of pregnancy?",
-    answer: "Yes, MomCare is designed to support you from the moment you find out you're pregnant through postpartum. Our content and features adapt to your current stage of pregnancy, providing relevant information and tools exactly when you need them."
+    question: "How do I get started with the app?",
+    answer: "Simply download the app, create an account, and enter your due date. We'll immediately personalize your experience based on your current pregnancy stage. You can explore week-by-week content, join community groups, and start tracking your health - all for free.",
+    emoji: "🚀"
   },
   {
-    id: 2,
-    question: "How accurate is the pregnancy tracking information?",
-    answer: "Our pregnancy content is developed and reviewed by a team of OB-GYNs, midwives, and maternal health specialists to ensure accuracy. We regularly update our information based on the latest research and medical guidelines."
+    question: "Is my health data kept private?",
+    answer: "Absolutely. We take your privacy seriously and follow strict security protocols. Your personal health information is encrypted and never shared with third parties without your explicit permission. You control who sees your information, even within community features.",
+    emoji: "🔒"
   },
   {
-    id: 3,
+    question: "Can I connect with other moms due around the same time?",
+    answer: "Yes! Our community feature automatically connects you with other moms who are at a similar stage in their pregnancy. You can join due date groups, special interest groups (like fitness during pregnancy or working moms), and exchange experiences safely.",
+    emoji: "👩‍👩‍👧‍👧"
+  },
+  {
+    question: "How accurate is the pregnancy information?",
+    answer: "All our content is created and reviewed by a board of OB-GYNs, midwives, and maternal health specialists. We regularly update our information based on the latest medical research and guidelines from major health organizations.",
+    emoji: "🔍"
+  },
+  {
     question: "Can I use the app if I have a high-risk pregnancy?",
-    answer: "Absolutely. While MomCare provides general pregnancy guidance, it can be a helpful companion for those with high-risk pregnancies. However, always follow your healthcare provider's specific advice, as they know your individual situation best."
+    answer: "Yes, many moms with high-risk pregnancies use our app as a supplemental resource. The app includes specialized content for various pregnancy conditions. However, always follow your healthcare provider's specific advice for your situation.",
+    emoji: "💓"
   },
   {
-    id: 4,
-    question: "Is my personal health information secure?",
-    answer: "We take data privacy very seriously. Your health information is encrypted and stored securely. We never share your personal data with third parties without your explicit consent. You can review our full privacy policy for more details."
-  },
-  {
-    id: 5,
-    question: "How do I connect with other moms in the community?",
-    answer: "Our community feature allows you to join discussion groups based on your due date, location, or specific interests (like first-time moms, working moms, etc.). You can ask questions, share experiences, and build connections in a supportive environment."
-  },
-  {
-    id: 6,
     question: "Is there a cost to use the app?",
-    answer: "MomCare offers a free basic version with essential tracking and educational content. We also offer a premium subscription that unlocks additional features like personalized meal plans, expert Q&A access, and advanced health monitoring tools."
-  },
+    answer: "The basic version of the app is completely free and includes access to essential tracking tools, community features, and educational content. We offer a premium subscription that unlocks additional features like personalized meal plans, expert Q&A, and advanced health analytics.",
+    emoji: "💰"
+  }
 ];
 
 const FAQSection = () => {
-  const [openFAQ, setOpenFAQ] = useState<number | null>(null);
-
-  const toggleFAQ = (id: number) => {
-    setOpenFAQ(openFAQ === id ? null : id);
-  };
-
   return (
     <section id="faq" className="py-24 bg-white">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-base font-semibold text-[rgb(var(--color-primary))] tracking-wide uppercase">FAQ</h2>
-          <p className="mt-2 text-3xl font-extrabold text-gray-900 sm:text-4xl">
-            Frequently Asked Questions
-          </p>
-          <p className="mt-4 text-xl text-gray-500">
-            Find answers to common questions about the MomCare pregnancy app.
-          </p>
-        </div>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div 
+          className="text-center mb-16"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+        >
+          <Text className="text-indigo-600 font-semibold tracking-wide uppercase">FAQ</Text>
+          <Title className="mt-2 text-3xl font-bold text-gray-900 sm:text-4xl">
+            Common Questions from Moms
+          </Title>
+          <Text className="mt-4 max-w-2xl text-xl text-gray-500 mx-auto">
+            Everything you need to know about our pregnancy companion app
+          </Text>
+        </motion.div>
 
-        <div className="space-y-6">
-          {faqs.map((faq) => (
-            <div 
-              key={faq.id} 
-              className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
-            >
-              <button
-                className="w-full flex justify-between items-center p-6 text-left focus:outline-none"
-                onClick={() => toggleFAQ(faq.id)}
-                aria-expanded={openFAQ === faq.id}
-              >
-                <span className="text-lg font-medium text-gray-900">{faq.question}</span>
-                <span className="ml-6 flex-shrink-0 text-[rgb(var(--color-primary))]">
-                  {openFAQ === faq.id ? (
-                    <ChevronUp className="h-5 w-5" />
-                  ) : (
-                    <ChevronDown className="h-5 w-5" />
-                  )}
-                </span>
-              </button>
-              <AnimatePresence>
-                {openFAQ === faq.id && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="px-6 pb-6 text-gray-600">
-                      {faq.answer}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+        >
+          <Card>
+            <AccordionList>
+              {faqs.map((faq, index) => (
+                <Accordion key={index}>
+                  <AccordionHeader>
+                    <div className="flex items-center">
+                      <span className="text-xl mr-3">{faq.emoji}</span>
+                      <Text className="font-medium">{faq.question}</Text>
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                  </AccordionHeader>
+                  <AccordionBody>
+                    <Text className="text-gray-600">{faq.answer}</Text>
+                  </AccordionBody>
+                </Accordion>
+              ))}
+            </AccordionList>
+          </Card>
+        </motion.div>
+
+        {/* Additional help section */}
+        <motion.div 
+          className="mt-16 text-center"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+        >
+          <Card className="bg-indigo-50 border-0">
+            <div className="p-6">
+              <div className="text-4xl mb-4">❓</div>
+              <Title className="text-indigo-800">Still have questions?</Title>
+              <Text className="max-w-xl mx-auto mb-6">
+                We&apos;re here to help! Our team of pregnancy experts and experienced moms are ready to answer any questions you might have.
+              </Text>
+              <div className="flex flex-col sm:flex-row justify-center gap-4">
+                <a 
+                  href="#contact-support" 
+                  className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+                >
+                  Contact Support 📧
+                </a>
+                <a 
+                  href="#join-community" 
+                  className="inline-flex items-center justify-center px-5 py-3 border border-indigo-200 text-base font-medium rounded-md text-indigo-700 bg-white hover:bg-indigo-50"
+                >
+                  Join Our Community 👩‍👩‍👧‍👧
+                </a>
+              </div>
             </div>
-          ))}
-        </div>
-        
-        <div className="mt-12 text-center">
-          <p className="text-gray-600">Still have questions?</p>
-          <a href="#contact" className="mt-4 btn-primary inline-block">
-            Contact Us
-          </a>
-        </div>
+          </Card>
+        </motion.div>
       </div>
     </section>
   );

@@ -1,117 +1,267 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import Image from 'next/image';
 import Link from 'next/link';
+import { Card, Title, Text, TabGroup, TabList, Tab, TabPanels, TabPanel } from '@tremor/react';
 
-const features = [
+interface Feature {
+  id: string;
+  emoji: string;
+  title: string;
+  description: string;
+  benefits: string[];
+}
+
+interface TrimesterFeature {
+  emoji: string;
+  title: string;
+  description: string;
+}
+
+interface TrimesterFeatures {
+  firstTrimester: TrimesterFeature[];
+  secondTrimester: TrimesterFeature[];
+  thirdTrimester: TrimesterFeature[];
+}
+
+const features: Feature[] = [
   {
     id: 'pregnancy-tracker',
+    emoji: '📊',
     title: 'Week-by-Week Tracker',
-    description: "Follow your baby's development with detailed insights for each week of pregnancy. Learn about your body's changes and what to expect next.",
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-      </svg>
-    )
+    description: "Follow your baby's development with detailed insights for each week of pregnancy.",
+    benefits: [
+      "Know exactly what's happening with your baby's growth each week",
+      "Understand the changes in your body and how to manage them",
+      "Prepare ahead for important milestones and doctor appointments"
+    ]
   },
   {
     id: 'nutrition-guide',
+    emoji: '🥗',
     title: 'Nutrition Guide',
-    description: 'Personalized meal plans and nutrition advice for each trimester. Get healthy recipes designed for the specific needs of pregnant women.',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-      </svg>
-    )
+    description: 'Personalized meal plans and nutrition advice for each trimester.',
+    benefits: [
+      "Easy-to-follow meal plans optimized for your specific pregnancy stage",
+      "Shopping lists that make grocery trips simple and effective",
+      "Delicious recipes designed to provide essential nutrients for you and baby"
+    ]
   },
   {
     id: 'exercise-plans',
+    emoji: '🧘‍♀️',
     title: 'Safe Exercise Plans',
-    description: 'Stay active with exercise routines specifically designed for pregnant women. All exercises are approved by prenatal healthcare professionals.',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-      </svg>
-    )
+    description: 'Stay active with exercise routines specifically designed for pregnant women.',
+    benefits: [
+      "Doctor-approved exercises that are safe for each trimester",
+      "Workouts that help reduce common pregnancy discomforts",
+      "Preparation for labor with targeted strength and breathing exercises"
+    ]
   },
   {
     id: 'community',
+    emoji: '👩‍👩‍👧‍👧',
     title: 'Mom Community',
-    description: 'Connect with other expecting mothers at similar stages. Share experiences, ask questions, and build supportive relationships.',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-      </svg>
-    )
+    description: 'Connect with other expecting mothers at similar stages.',
+    benefits: [
+      "Share your journey with moms who understand exactly what you're going through",
+      "Get real-life advice and recommendations from those who've been there",
+      "Build lasting friendships that continue after your babies arrive"
+    ]
   },
   {
-    id: 'health-tracking',
+    id: 'health-monitoring',
+    emoji: '💓',
     title: 'Health Monitoring',
-    description: 'Track important health metrics throughout your pregnancy. Monitor weight, blood pressure, symptoms, and more in one convenient place.',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-      </svg>
-    )
+    description: 'Track important health metrics throughout your pregnancy.',
+    benefits: [
+      "Easy logging of weight, blood pressure, and other vital metrics",
+      "Symptom tracker to discuss with your healthcare provider",
+      "Automatic notifications for concerning changes that need attention"
+    ]
   },
   {
     id: 'expert-advice',
-    title: 'Expert Advice',
-    description: 'Access to articles, videos, and tips from OB-GYNs, midwives, and other pregnancy specialists. Get answers to your most pressing questions.',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-      </svg>
-    )
+    emoji: '👩‍⚕️',
+    title: 'Expert Guidance',
+    description: 'Access to articles, videos, and tips from OB-GYNs and midwives.',
+    benefits: [
+      "Medical information translated into easy-to-understand language",
+      "Access to a library of expert-reviewed articles on every pregnancy topic",
+      "Video tutorials for breathing techniques, birthing positions, and more"
+    ]
   }
 ];
+
+// Features organized by trimester for the tab view
+const trimesterFeatures: TrimesterFeatures = {
+  firstTrimester: [
+    {
+      emoji: '🤢',
+      title: 'Morning Sickness Management',
+      description: 'Natural remedies and tips to help you manage nausea and maintain nutrition.'
+    },
+    {
+      emoji: '💤',
+      title: 'Fatigue Solutions',
+      description: 'Strategies to cope with first-trimester exhaustion while maintaining your daily life.'
+    },
+    {
+      emoji: '🗓️',
+      title: 'Appointment Scheduler',
+      description: 'Keeps track of your first vital doctor visits and reminds you of key screenings.'
+    }
+  ],
+  secondTrimester: [
+    {
+      emoji: '👶',
+      title: 'Baby Movement Tracker',
+      description: 'Start monitoring those exciting first kicks and movements.'
+    },
+    {
+      emoji: '🛍️',
+      title: 'Maternity Essentials Guide',
+      description: 'Shopping guidance for comfortable clothes and pregnancy necessities.'
+    },
+    {
+      emoji: '📸',
+      title: 'Pregnancy Photoshoot Ideas',
+      description: 'Creative ways to document your growing bump during the "golden trimester."'
+    }
+  ],
+  thirdTrimester: [
+    {
+      emoji: '🛌',
+      title: 'Sleep Support System',
+      description: 'Techniques and position guides for better sleep as your belly grows.'
+    },
+    {
+      emoji: '🏥',
+      title: 'Birth Plan Creator',
+      description: 'Interactive tool to develop and share your ideal birth experience with your providers.'
+    },
+    {
+      emoji: '🧸',
+      title: 'Hospital Bag Checklist',
+      description: "Comprehensive, customizable list so you're ready when the big day arrives."
+    }
+  ]
+};
 
 const FeaturesSection = () => {
   return (
     <section id="features" className="py-24 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <h2 className="text-base font-semibold text-[rgb(var(--color-primary))] tracking-wide uppercase">Features</h2>
-          <p className="mt-2 text-3xl font-extrabold text-gray-900 sm:text-4xl">
-            Everything You Need for Your Pregnancy Journey
-          </p>
-          <p className="mt-4 max-w-2xl text-xl text-gray-500 mx-auto">
-            Our comprehensive tools help you stay informed, prepared, and connected during this special time.
-          </p>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section Header */}
+        <div className="text-center mb-16">
+          <Text className="text-indigo-600 font-semibold tracking-wide uppercase">Features</Text>
+          <Title className="mt-2 text-3xl font-bold text-gray-900 sm:text-4xl">
+            Everything You Need on Your Motherhood Journey
+          </Title>
+          <Text className="mt-4 max-w-2xl text-xl text-gray-500 mx-auto">
+            Designed by mothers, for mothers - with the tools and support you need at every stage.
+          </Text>
         </div>
 
-        <div className="mt-16">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.id}
-                className="relative p-6 bg-white rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <div className="absolute -top-3 -left-3 h-12 w-12 rounded-full bg-[rgba(var(--color-primary),0.1)] flex items-center justify-center text-[rgb(var(--color-primary))]">
-                  {feature.icon}
+        {/* Main Features Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+          {features.map((feature, index) => (
+            <motion.div
+              key={feature.id}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+            >
+              <Card decoration="top" decorationColor="indigo" className="h-full">
+                <div className="flex flex-col h-full">
+                  <div className="flex items-center mb-4">
+                    <div className="text-4xl mr-3">{feature.emoji}</div>
+                    <Title className="text-lg font-semibold">{feature.title}</Title>
+                  </div>
+                  <Text className="mb-4">{feature.description}</Text>
+                  
+                  <div className="mt-auto">
+                    <Text className="font-medium text-indigo-600 mb-2">Why mothers love this:</Text>
+                    <ul className="space-y-2 ml-1">
+                      {feature.benefits.map((benefit, i) => (
+                        <li key={i} className="flex items-start">
+                          <span className="text-indigo-500 mr-2">✓</span>
+                          <Text className="text-sm">{benefit}</Text>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-                <div className="mt-2 pl-6">
-                  <h3 className="text-lg font-medium text-gray-900">{feature.title}</h3>
-                  <p className="mt-2 text-base text-gray-500">{feature.description}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+              </Card>
+            </motion.div>
+          ))}
         </div>
         
-        <div className="mt-16 text-center">
-          <Link href="#get-started" className="btn-primary inline-flex items-center">
-            Try All Features
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
-          </Link>
+        {/* Trimester-specific features with Tremor Tabs */}
+        <div className="mt-24">
+          <div className="text-center mb-8">
+            <Title className="text-2xl font-bold text-gray-900">
+              Support That Evolves With Your Pregnancy
+            </Title>
+            <Text className="text-gray-600">
+              Our app adapts to your changing needs throughout your pregnancy journey
+            </Text>
+          </div>
+          
+          <Card>
+            <TabGroup>
+              <TabList className="mb-6">
+                <Tab>First Trimester</Tab>
+                <Tab>Second Trimester</Tab>
+                <Tab>Third Trimester</Tab>
+              </TabList>
+              <TabPanels>
+                {(Object.keys(trimesterFeatures) as Array<keyof TrimesterFeatures>).map((trimester, i) => (
+                  <TabPanel key={i}>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {trimesterFeatures[trimester].map((item, idx) => (
+                        <motion.div
+                          key={idx}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: idx * 0.1 }}
+                          className="text-center p-4"
+                        >
+                          <div className="text-3xl mb-2">{item.emoji}</div>
+                          <Text className="font-semibold">{item.title}</Text>
+                          <Text className="text-sm text-gray-500">{item.description}</Text>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </TabPanel>
+                ))}
+              </TabPanels>
+            </TabGroup>
+          </Card>
         </div>
+        
+        {/* CTA Banner */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="mt-16"
+        >
+          <Card className="bg-indigo-50 border-0">
+            <div className="text-center py-6">
+              <Title className="text-indigo-800">Ready to start your journey?</Title>
+              <Text className="mb-6">Join thousands of mothers who trust our app every day</Text>
+              <Link 
+                href="#get-started" 
+                className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+              >
+                Get Started Free ✨
+              </Link>
+            </div>
+          </Card>
+        </motion.div>
       </div>
     </section>
   );
