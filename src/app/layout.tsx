@@ -1,18 +1,19 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter as FontSans } from "next/font/google";
 import "./globals.css";
-import { QueryClientProvider } from "@/lib/providers/query-client-provider";
-import { WebVitalsTracker } from "@/components/dev/WebVitalsTracker";
+import { cn } from "@/lib/utils";
+import { ThemeProvider } from "@/lib/providers/theme-provider";
+import { Toaster } from "@/components/ui/toaster";
 
-const inter = Inter({
-  variable: "--font-sans",
+const fontSans = FontSans({
   subsets: ["latin"],
-  display: "swap",
+  variable: "--font-sans",
 });
 
 export const metadata: Metadata = {
   title: "PregnancyPlus - Your Complete Pregnancy Companion",
   description: "Track your pregnancy journey, get personalized insights, and connect with a supportive community - all in one beautifully designed app.",
+  metadataBase: new URL("https://pregnancyplus.app"),
   keywords: ["pregnancy", "pregnant", "mom", "baby", "health", "tracking", "prenatal care"],
   openGraph: {
     title: "PregnancyPlus - Your Complete Pregnancy Companion",
@@ -35,14 +36,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scroll-smooth">
-      <body
-        className={`${inter.variable} font-sans antialiased`}
-      >
-        <QueryClientProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body className={cn(
+        "min-h-screen bg-background font-sans antialiased",
+        fontSans.variable
+      )}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
           {children}
-          <WebVitalsTracker />
-        </QueryClientProvider>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

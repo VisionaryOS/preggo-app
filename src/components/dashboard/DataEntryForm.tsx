@@ -12,6 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 const formSchema = z.object({
   weight: z.preprocess(
@@ -75,11 +78,15 @@ export function DataEntryForm({ onDataSubmit }: DataEntryFormProps) {
   ];
 
   return (
-    <Card className="mb-6 border-dashed">
-      <CardHeader className="pb-3 cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
+    <Card className="border border-border shadow-sm transition-all duration-200 hover:shadow-md">
+      <CardHeader 
+        className="pb-3 cursor-pointer" 
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
         <CardTitle className="text-lg flex items-center justify-between">
           <span>Daily Health Tracker</span>
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" className="gap-1">
+            {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             {isExpanded ? 'Collapse' : 'Expand'}
           </Button>
         </CardTitle>
@@ -90,7 +97,7 @@ export function DataEntryForm({ onDataSubmit }: DataEntryFormProps) {
       {isExpanded && (
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            <CardContent className="grid gap-4">
+            <CardContent className="grid gap-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField
                   control={form.control}
@@ -105,6 +112,7 @@ export function DataEntryForm({ onDataSubmit }: DataEntryFormProps) {
                           {...field}
                           value={field.value || ''}
                           onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
+                          className="focus-visible:ring-primary"
                         />
                       </FormControl>
                       <FormMessage />
@@ -118,7 +126,11 @@ export function DataEntryForm({ onDataSubmit }: DataEntryFormProps) {
                     <FormItem>
                       <FormLabel>Blood Pressure</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. 120/80" {...field} />
+                        <Input 
+                          placeholder="e.g. 120/80" 
+                          {...field} 
+                          className="focus-visible:ring-primary"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -137,6 +149,7 @@ export function DataEntryForm({ onDataSubmit }: DataEntryFormProps) {
                           {...field}
                           value={field.value || ''}
                           onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
+                          className="focus-visible:ring-primary"
                         />
                       </FormControl>
                       <FormMessage />
@@ -152,27 +165,28 @@ export function DataEntryForm({ onDataSubmit }: DataEntryFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Mood</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select your mood" />
+                      <FormControl>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          defaultValue={field.value}
+                        >
+                          <SelectTrigger className="focus-visible:ring-primary">
+                            <SelectValue placeholder="Select mood" />
                           </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="great">Great</SelectItem>
-                          <SelectItem value="good">Good</SelectItem>
-                          <SelectItem value="okay">Okay</SelectItem>
-                          <SelectItem value="poor">Poor</SelectItem>
-                          <SelectItem value="terrible">Terrible</SelectItem>
-                        </SelectContent>
-                      </Select>
+                          <SelectContent>
+                            <SelectItem value="great">Great</SelectItem>
+                            <SelectItem value="good">Good</SelectItem>
+                            <SelectItem value="okay">Okay</SelectItem>
+                            <SelectItem value="poor">Poor</SelectItem>
+                            <SelectItem value="terrible">Terrible</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+                
                 <FormField
                   control={form.control}
                   name="exerciseMinutes"
@@ -186,12 +200,14 @@ export function DataEntryForm({ onDataSubmit }: DataEntryFormProps) {
                           {...field}
                           value={field.value || ''}
                           onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
+                          className="focus-visible:ring-primary"
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+                
                 <FormField
                   control={form.control}
                   name="waterIntake"
@@ -201,10 +217,11 @@ export function DataEntryForm({ onDataSubmit }: DataEntryFormProps) {
                       <FormControl>
                         <Input
                           type="number"
-                          placeholder="Milliliters of water"
+                          placeholder="Water consumed"
                           {...field}
                           value={field.value || ''}
                           onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
+                          className="focus-visible:ring-primary"
                         />
                       </FormControl>
                       <FormMessage />
@@ -213,65 +230,78 @@ export function DataEntryForm({ onDataSubmit }: DataEntryFormProps) {
                 />
               </div>
 
-              <FormField
-                control={form.control}
-                name="hadSymptoms"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                    <div className="space-y-0.5">
-                      <FormLabel>Had Symptoms Today?</FormLabel>
-                      <FormDescription>
-                        Toggle to record any pregnancy symptoms
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              {form.watch('hadSymptoms') && (
-                <div className="border rounded-lg p-4">
-                  <FormLabel className="mb-2 block">Select Symptoms</FormLabel>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {symptomsOptions.map((symptom) => (
-                      <div key={symptom.value} className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          id={`symptom-${symptom.value}`}
-                          value={symptom.value}
-                          className="rounded border-gray-300 text-primary focus:ring-primary"
-                          onChange={(e) => {
-                            const currentSymptoms = form.getValues('symptoms') || [];
-                            
-                            if (e.target.checked) {
-                              form.setValue('symptoms', [
-                                ...currentSymptoms, 
-                                symptom.value as any
-                              ]);
-                            } else {
-                              form.setValue(
-                                'symptoms',
-                                currentSymptoms.filter((val) => val !== symptom.value)
-                              );
-                            }
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="hadSymptoms"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                      <div className="space-y-0.5">
+                        <FormLabel>Experienced Symptoms</FormLabel>
+                        <FormDescription>
+                          Did you experience any pregnancy symptoms today?
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                {form.watch('hadSymptoms') && (
+                  <div className="rounded-lg border p-4">
+                    <FormLabel className="text-base">Select Symptoms</FormLabel>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+                      {symptomsOptions.map((symptom) => (
+                        <FormField
+                          key={symptom.value}
+                          control={form.control}
+                          name="symptoms"
+                          render={({ field }) => {
+                            return (
+                              <FormItem
+                                key={symptom.value}
+                                className="flex flex-row items-start space-x-3 space-y-0 p-2"
+                              >
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(symptom.value as any)}
+                                    onCheckedChange={(checked) => {
+                                      const current = field.value || [];
+                                      return checked
+                                        ? field.onChange([...current, symptom.value])
+                                        : field.onChange(
+                                            current.filter((value) => value !== symptom.value)
+                                          );
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="font-normal cursor-pointer">
+                                  {symptom.label}
+                                </FormLabel>
+                              </FormItem>
+                            );
                           }}
                         />
-                        <Label htmlFor={`symptom-${symptom.value}`} className="text-sm">
-                          {symptom.label}
-                        </Label>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </CardContent>
-            <CardFooter>
-              <Button type="submit" className="w-full">Save Today's Data</Button>
+            <CardFooter className="flex justify-end space-x-2 border-t pt-4">
+              <Button 
+                variant="outline" 
+                type="button" 
+                onClick={() => form.reset()}
+              >
+                Reset
+              </Button>
+              <Button type="submit">Save Entry</Button>
             </CardFooter>
           </form>
         </Form>
