@@ -4,13 +4,17 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:alt": "next dev -p 3001",
     "build": "next build",
-    "build:vercel": "next build",
     "start": "next start",
+    "start:alt": "next start -p 3001",
+    "kill:3000": "powershell -Command \"Stop-Process -Id (Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue).OwningProcess -Force -ErrorAction SilentlyContinue\"",
+    "dev:clean": "npm run kill:3000 && npm run dev",
+    "start:clean": "npm run kill:3000 && npm run start",
     "lint": "next lint",
-    "deploy": "vercel",
-    "prepare": "node -e \"try{require('fs').statSync('.git');process.exit(0)}catch(e){process.exit(1)}\" && husky",
-    "lint:fix": "next lint --fix"
+    "lint:fix": "next lint --fix",
+    "analyze": "ANALYZE=true next build",
+    "prettier": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -49,6 +53,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@next/bundle-analyzer": "^15.1.7",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

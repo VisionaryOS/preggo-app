@@ -3,8 +3,18 @@
 import { motion } from 'framer-motion';
 import { Card, Title, Text } from '@tremor/react';
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
 
 const HeroSection = () => {
+  // Add state to control when animations should start
+  const [shouldAnimate, setShouldAnimate] = useState(false);
+  
+  useEffect(() => {
+    // Delay animations until after initial render for better performance
+    const timer = setTimeout(() => setShouldAnimate(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <section className="relative py-20 sm:py-32 bg-gradient-to-b from-white to-blue-50 overflow-hidden">
       {/* Background pattern/decoration - subtle and modern */}
@@ -25,7 +35,7 @@ const HeroSection = () => {
         <div className="text-center space-y-8">
           {/* Main headline with emoji */}
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
+            initial={shouldAnimate ? { opacity: 0, y: 20 } : { opacity: 1, y: 0 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
             className="space-y-4"
@@ -43,9 +53,9 @@ const HeroSection = () => {
 
           {/* CTA Buttons */}
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
+            initial={shouldAnimate ? { opacity: 0, y: 20 } : { opacity: 1, y: 0 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
+            transition={{ duration: 0.5, delay: shouldAnimate ? 0.1 : 0 }}
             className="flex flex-col sm:flex-row justify-center gap-4"
           >
             <div className="rounded-md shadow">
@@ -62,9 +72,9 @@ const HeroSection = () => {
           
           {/* Trust indicators */}
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
+            initial={shouldAnimate ? { opacity: 0, y: 20 } : { opacity: 1, y: 0 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            transition={{ duration: 0.5, delay: shouldAnimate ? 0.2 : 0 }}
             className="pt-8"
           >
             <Text className="text-sm font-medium text-gray-500 mb-4">
@@ -87,9 +97,9 @@ const HeroSection = () => {
 
           {/* Key benefits highlight */}
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
+            initial={shouldAnimate ? { opacity: 0, y: 20 } : { opacity: 1, y: 0 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
+            transition={{ duration: 0.5, delay: shouldAnimate ? 0.3 : 0 }}
             className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-8"
           >
             <div className="text-center p-4">

@@ -11,8 +11,14 @@ export function QueryClientProvider({ children }: { children: ReactNode }) {
         staleTime: 5 * 60 * 1000, // 5 minutes
         gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime in v4)
         retry: 1, // Retry failed requests only once
-        refetchOnWindowFocus: true,
+        refetchOnWindowFocus: process.env.NODE_ENV === 'production', // Disable in development
         refetchOnReconnect: true,
+        // Add performance optimizations
+        refetchOnMount: false, // Don't refetch on component mount
+      },
+      mutations: {
+        retry: 1, // Retry failed mutations only once
+        networkMode: 'always', // Continue to allow mutations when offline to improve UX
       },
     },
   }));

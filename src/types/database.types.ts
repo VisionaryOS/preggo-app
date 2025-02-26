@@ -68,7 +68,7 @@ export interface Database {
           created_at: string
           user_id: string
           symptoms: string[] | null
-          mood: string | null
+          mood: string[] | null
           weight: number | null
           notes: string | null
         }
@@ -77,7 +77,7 @@ export interface Database {
           created_at?: string
           user_id: string
           symptoms?: string[] | null
-          mood?: string | null
+          mood?: string[] | null
           weight?: number | null
           notes?: string | null
         }
@@ -86,7 +86,7 @@ export interface Database {
           created_at?: string
           user_id?: string
           symptoms?: string[] | null
-          mood?: string | null
+          mood?: string[] | null
           weight?: number | null
           notes?: string | null
         }

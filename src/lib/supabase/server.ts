@@ -1,6 +1,6 @@
 import { createServerComponentClient, createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
-import { Database } from '@/types/supabase';
+import { Database } from '@/types/database.types';
 import { createClient } from '@supabase/supabase-js';
 
 // Server-side Supabase client (for API routes and server components)
@@ -18,7 +18,7 @@ export const createServerClient = () => {
       throw new Error('Missing Supabase environment variables');
     }
     
-    return createClient(supabaseUrl, supabaseKey);
+    return createClient<Database>(supabaseUrl, supabaseKey);
   }
 };
 
