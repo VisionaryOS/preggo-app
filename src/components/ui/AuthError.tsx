@@ -35,6 +35,7 @@ export function AuthError({
         setDiagnosticInfo('No issues detected. The problem might be temporary.');
       }
     } catch (err) {
+      console.error('Diagnostics error:', err);
       setDiagnosticInfo('Unable to run diagnostics. Please try again later.');
     } finally {
       setIsRunningDiagnostics(false);

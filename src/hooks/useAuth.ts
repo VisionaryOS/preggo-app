@@ -82,20 +82,20 @@ function recordFailure(): void {
   }
 }
 
-export const useAuthStore = create<AuthState>()((_set, _get) => ({
+export const useAuthStore = create<AuthState>()((set) => ({
   user: null,
   session: null,
   isLoading: true,
   isAuthenticated: false,
   error: null,
   
-  clearError: () => _set({ error: null }),
+  clearError: () => set({ error: null }),
   
   resetCircuitBreaker: () => {
     circuitState.failures = 0;
     circuitState.isOpen = false;
     circuitState.lastFailure = 0;
-    _set({ error: null });
+    set({ error: null });
     console.info('Auth circuit breaker manually reset');
   },
   
@@ -107,7 +107,7 @@ export const useAuthStore = create<AuthState>()((_set, _get) => ({
   
   signIn: async (email, password) => {
     try {
-      _set({ isLoading: true, error: null });
+      set({ isLoading: true, error: null });
       
       // Check circuit breaker before proceeding
       if (!checkCircuitBreaker()) {
@@ -140,7 +140,7 @@ export const useAuthStore = create<AuthState>()((_set, _get) => ({
         }
         
         const { message, severity } = handleAuthError(response.error, { email });
-        _set({ error: { message, severity } });
+        set({ error: { message, severity } });
         return response;
       }
       
@@ -148,7 +148,7 @@ export const useAuthStore = create<AuthState>()((_set, _get) => ({
       circuitState.failures = 0;
       
       if (response.data?.session) {
-        _set({
+        set({
           user: response.data.user,
           session: response.data.session,
           isAuthenticated: true,
@@ -159,19 +159,19 @@ export const useAuthStore = create<AuthState>()((_set, _get) => ({
       return response;
     } catch (error) {
       const { message, severity } = handleAuthError(error as Error, { email });
-      _set({ error: { message, severity } });
+      set({ error: { message, severity } });
       return {
         error: error as AuthError,
         data: { user: null, session: null }
       };
     } finally {
-      _set({ isLoading: false });
+      set({ isLoading: false });
     }
   },
   
   signUp: async (email, password, meta = {}) => {
     try {
-      _set({ isLoading: true, error: null });
+      set({ isLoading: true, error: null });
       
       // Check circuit breaker
       if (!checkCircuitBreaker()) {
@@ -217,7 +217,7 @@ export const useAuthStore = create<AuthState>()((_set, _get) => ({
         }
         
         const { message, severity } = handleAuthError(response.error, { email });
-        _set({ error: { message, severity } });
+        set({ error: { message, severity } });
         return response;
       }
       
@@ -225,7 +225,7 @@ export const useAuthStore = create<AuthState>()((_set, _get) => ({
       circuitState.failures = 0;
       
       if (response.data?.session) {
-        _set({
+        set({
           user: response.data.user,
           session: response.data.session,
           isAuthenticated: true,
@@ -236,31 +236,31 @@ export const useAuthStore = create<AuthState>()((_set, _get) => ({
       return response;
     } catch (error) {
       const { message, severity } = handleAuthError(error as Error, { email });
-      _set({ error: { message, severity } });
+      set({ error: { message, severity } });
       return {
         error: error as AuthError,
         data: { user: null, session: null }
       };
     } finally {
-      _set({ isLoading: false });
+      set({ isLoading: false });
     }
   },
   
   signOut: async () => {
     try {
-      _set({ isLoading: true, error: null });
+      set({ isLoading: true, error: null });
       const supabase = createClient();
       await supabase.auth.signOut();
-      _set({
+      set({
         user: null,
         session: null,
         isAuthenticated: false,
       });
     } catch (error) {
       const { message, severity } = handleAuthError(error as Error);
-      _set({ error: { message, severity } });
+      set({ error: { message, severity } });
     } finally {
-      _set({ isLoading: false });
+      set({ isLoading: false });
     }
   },
   
@@ -272,7 +272,7 @@ export const useAuthStore = create<AuthState>()((_set, _get) => ({
         return;
       }
       
-      _set({ isLoading: true });
+      set({ isLoading: true });
       const supabase = createClient();
       
       const { data, error } = await supabase.auth.getSession();
@@ -286,7 +286,7 @@ export const useAuthStore = create<AuthState>()((_set, _get) => ({
         }
         
         const { message, severity } = handleAuthError(error);
-        _set({ error: { message, severity } });
+        set({ error: { message, severity } });
         return;
       }
       
@@ -294,14 +294,14 @@ export const useAuthStore = create<AuthState>()((_set, _get) => ({
       circuitState.failures = 0;
       
       if (data?.session) {
-        _set({
+        set({
           user: data.session.user,
           session: data.session,
           isAuthenticated: true,
           error: null,
         });
       } else {
-        _set({
+        set({
           user: null,
           session: null,
           isAuthenticated: false,
@@ -317,15 +317,15 @@ export const useAuthStore = create<AuthState>()((_set, _get) => ({
       }
       
       const { message, severity } = handleAuthError(error as Error);
-      _set({ error: { message, severity } });
+      set({ error: { message, severity } });
     } finally {
-      _set({ isLoading: false });
+      set({ isLoading: false });
     }
   },
   
   runDiagnostics: async () => {
     try {
-      _set({ isLoading: true });
+      set({ isLoading: true });
       const results = await runSupabaseDiagnostics();
       
       if (process.env.NODE_ENV === 'development') {
@@ -335,7 +335,7 @@ export const useAuthStore = create<AuthState>()((_set, _get) => ({
       const { status, issues, recommendations } = getDiagnosticSummary(results);
       
       if (status !== 'healthy') {
-        _set({
+        set({
           error: {
             message: `Authentication service issues detected: ${issues.join(', ')}. ${recommendations.join('. ')}`,
             severity: status === 'error' ? 'error' : 'warning'
@@ -344,9 +344,9 @@ export const useAuthStore = create<AuthState>()((_set, _get) => ({
       }
     } catch (error) {
       const { message, severity } = handleAuthError(error as Error);
-      _set({ error: { message, severity } });
+      set({ error: { message, severity } });
     } finally {
-      _set({ isLoading: false });
+      set({ isLoading: false });
     }
   },
 }));
