@@ -2,6 +2,24 @@ import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/hooks/useAuth';
 import { runSupabaseDiagnostics, logDiagnosticResults } from '@/lib/supabase/diagnostics';
 
+// Define type for diagnostics result
+interface DiagnosticsResult {
+  configStatus: {
+    urlValid: boolean;
+    keyFormatValid: boolean;
+    region?: string;
+    availabilityZone?: string;
+  };
+  connectionTest: {
+    success: boolean;
+    error: string | null;
+    responseTime: number;
+  };
+  storageCheck: {
+    localStorageAvailable: boolean;
+  };
+}
+
 /**
  * Debug panel for authentication status monitoring
  * Only use in development environments
@@ -9,13 +27,8 @@ import { runSupabaseDiagnostics, logDiagnosticResults } from '@/lib/supabase/dia
 export function AuthDebugPanel() {
   const auth = useAuthStore();
   const [isVisible, setIsVisible] = useState(false);
-  const [diagnosticsResult, setDiagnosticsResult] = useState<any>(null);
+  const [diagnosticsResult, setDiagnosticsResult] = useState<DiagnosticsResult | null>(null);
   const [lastUpdated, setLastUpdated] = useState(new Date());
-  
-  // Only show in development
-  if (process.env.NODE_ENV === 'production') {
-    return null;
-  }
   
   const refreshDiagnostics = async () => {
     const results = await runSupabaseDiagnostics();
@@ -36,6 +49,11 @@ export function AuthDebugPanel() {
     
     return () => clearInterval(interval);
   }, [isVisible]);
+  
+  // Only show in development
+  if (process.env.NODE_ENV === 'production') {
+    return null;
+  }
   
   if (!isVisible) {
     return (

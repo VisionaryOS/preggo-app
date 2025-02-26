@@ -34,7 +34,7 @@ export function AuthError({
       } else {
         setDiagnosticInfo('No issues detected. The problem might be temporary.');
       }
-    } catch (error) {
+    } catch (err) {
       setDiagnosticInfo('Unable to run diagnostics. Please try again later.');
     } finally {
       setIsRunningDiagnostics(false);
