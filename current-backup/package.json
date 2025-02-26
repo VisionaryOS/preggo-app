@@ -4,12 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "build:vercel": "next build",
+    "build": "cross-env NODE_ENV=production next build",
+    "build:vercel": "cross-env NODE_OPTIONS=--max_old_space_size=4096 next build",
     "start": "next start",
     "lint": "next lint",
     "deploy": "vercel",
-    "prepare": "node -e \"try{require('fs').statSync('.git');process.exit(0)}catch(e){process.exit(1)}\" && husky",
+    "prepare": "node -e \"try{require('fs').statSync('.git');require('husky')}catch(e){}\"",
     "lint:fix": "next lint --fix"
   },
   "dependencies": {
@@ -38,6 +38,7 @@
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.54.2",
     "tailwind-merge": "^3.0.2",
+    "tailwindcss": "^3.4.1",
     "tailwindcss-animate": "^1.0.7",
     "web-vitals": "^4.2.4",
     "zod": "^3.24.2",
@@ -46,17 +47,18 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@types/node": "^20",
-    "@types/react": "^19",
+    "@types/react": "19.0.10",
     "@types/react-dom": "^19",
     "@typescript-eslint/eslint-plugin": "^8.25.0",
     "@typescript-eslint/parser": "^8.25.0",
+    "autoprefixer": "^10.4.20",
+    "cross-env": "^7.0.3",
     "eslint": "^8.56.0",
     "eslint-config-next": "^13.5.8",
     "husky": "^9.1.7",
     "lint-staged": "^15.4.3",
-    "postcss": "^8",
-    "tailwindcss": "^3.4.1",
-    "typescript": "^5",
+    "postcss": "^8.5.3",
+    "typescript": "5.7.3",
     "vercel": "^41.2.2"
   },
   "resolutions": {
