@@ -58,7 +58,7 @@ const testimonials: Testimonial[] = [
 
 const TestimonialsSection = () => {
   return (
-    <section id="testimonials" className="py-24 bg-gradient-to-b from-white to-indigo-50">
+    <section id="testimonials" className="py-24 bg-gradient-to-b from-white to-indigo-50 dark:from-slate-950 dark:to-slate-900">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <motion.div
@@ -67,11 +67,11 @@ const TestimonialsSection = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <Text className="text-indigo-600 font-semibold tracking-wide uppercase">Testimonials</Text>
-            <Title className="mt-2 text-3xl font-bold text-gray-900 sm:text-4xl">
+            <Text className="text-primary font-semibold tracking-wide uppercase">Testimonials</Text>
+            <Title className="mt-2 text-3xl font-bold text-foreground sm:text-4xl">
               Loved by Mothers Everywhere
             </Title>
-            <Text className="mt-4 max-w-2xl text-xl text-gray-500 mx-auto">
+            <Text className="mt-4 max-w-2xl text-xl text-muted-foreground mx-auto">
               Hear from real moms who have transformed their pregnancy journey with our app.
             </Text>
           </motion.div>
@@ -88,10 +88,12 @@ const TestimonialsSection = () => {
             >
               <Card className="h-full flex flex-col">
                 <div className="flex items-center mb-4">
-                  <div className="text-4xl mr-4">{testimonial.emoji}</div>
+                  <div className="text-5xl mr-4 bg-primary/10 rounded-full p-3 w-16 h-16 flex items-center justify-center">
+                    {testimonial.emoji}
+                  </div>
                   <div>
                     <Text className="font-semibold">{testimonial.name}</Text>
-                    <Text className="text-sm text-gray-500">{testimonial.role}</Text>
+                    <Text className="text-sm text-muted-foreground">{testimonial.role}</Text>
                   </div>
                 </div>
                 
@@ -102,8 +104,8 @@ const TestimonialsSection = () => {
                 </div>
                 
                 <div className="mt-auto pt-4">
-                  <Card decoration="top" decorationColor="indigo" className="bg-indigo-50 border-0">
-                    <Text className="text-indigo-800 font-medium">
+                  <Card decoration="top" decorationColor="indigo" className="bg-primary/10 dark:bg-primary/5 border-0">
+                    <Text className="text-primary font-medium">
                       {testimonial.highlight}
                     </Text>
                   </Card>
@@ -121,19 +123,23 @@ const TestimonialsSection = () => {
           className="text-center mt-20"
         >
           <Card className="inline-block max-w-2xl mx-auto p-6">
-            <Metric className="text-indigo-800">96%</Metric>
+            <div className="text-5xl mb-4">❤️</div>
+            <Metric className="text-primary">96%</Metric>
             <Title className="text-xl">of mothers recommend our app</Title>
             <Divider />
             <div className="flex justify-center gap-8 mt-4">
               <div className="text-center">
+                <div className="text-xl mb-2">⭐</div>
                 <Metric>4.9/5</Metric>
                 <Text className="text-sm">App Store</Text>
               </div>
               <div className="text-center">
+                <div className="text-xl mb-2">📱</div>
                 <Metric>4.8/5</Metric>
                 <Text className="text-sm">Google Play</Text>
               </div>
               <div className="text-center">
+                <div className="text-xl mb-2">👥</div>
                 <Metric>10k+</Metric>
                 <Text className="text-sm">Active Users</Text>
               </div>

@@ -1,4 +1,4 @@
-# Pregnancy App
+# Preggo App
 
 A Next.js application built with Supabase for pregnant women to track their journey, manage symptoms, and access personalized resources.
 
@@ -13,7 +13,7 @@ A Next.js application built with Supabase for pregnant women to track their jour
 
 ## Tech Stack
 
-- **Framework**: Next.js 14 with App Router
+- **Framework**: Next.js 15 with App Router
 - **Language**: TypeScript
 - **Database & Auth**: Supabase
 - **Styling**: Tailwind CSS with shadcn/ui components
@@ -31,8 +31,8 @@ A Next.js application built with Supabase for pregnant women to track their jour
 
 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/pregnancy-app.git
-cd pregnancy-app
+git clone https://github.com/VisionaryOS/preggo-app.git
+cd preggo-app
 ```
 
 2. Install dependencies
@@ -68,6 +68,7 @@ The project follows a clean and well-organized structure:
   - `/components/auth`: Authentication-related components
   - `/components/dashboard`: Dashboard-specific components
   - `/components/features`: Feature-specific components
+  - `/components/onboarding`: Onboarding flow components
 - `/src/hooks`: Custom React hooks
 - `/src/lib`: Utility functions and services
   - `/lib/supabase`: Supabase client and service functions
@@ -141,7 +142,7 @@ CREATE TABLE public.pregnancy_logs (
 - Implement code splitting with dynamic imports
 - Optimize images with Next.js Image component
 - Memoize expensive computations with useMemo and useCallback
-- Use SWR or TanStack Query for data fetching with caching
+- Use TanStack Query for data fetching with caching
 
 ### Database Optimizations
 
@@ -178,6 +179,23 @@ The application is configured for deployment on Vercel:
 ```bash
 npm run build
 ```
+
+For local development:
+
+```bash
+# Standard development server
+npm run dev
+
+# Alternative port (3001)
+npm run dev:alt
+
+# Clean start (kills existing processes on port 3000)
+npm run dev:clean
+```
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a detailed history of changes.
 
 ## License
 

@@ -12,7 +12,10 @@ export async function checkSupabaseHealth() {
   try {
     const supabase = createClient();
     const start = performance.now();
-    const { error } = await supabase.from('_status').select('time').limit(1);
+    
+    // Use a type assertion to bypass TypeScript restrictions for diagnostic purposes
+    const { error } = await (supabase as any).from('users').select('id').limit(1);
+    
     const latency = Math.round(performance.now() - start);
     
     return {

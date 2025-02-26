@@ -355,15 +355,13 @@ export default function SignupForm({ onStepChange }: SignupFormProps) {
                 <h3 className="font-medium">Your account has been created!</h3>
               </div>
               <p className="text-sm ml-10 mt-2 mb-4">
-                {getValues('dueDate') ? 
-                  "Continue to complete your profile setup and start your personalized pregnancy journey." :
-                  "Please set up your profile to get personalized guidance for your pregnancy."}
+                Continue to your personalized dashboard to complete your profile setup.
               </p>
               <Button 
-                onClick={() => router.push('/onboarding')} 
+                onClick={() => router.push('/dashboard')} 
                 className="w-full mt-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white rounded-xl shadow-md"
               >
-                Continue to Setup
+                Go to Dashboard
               </Button>
             </motion.div>
           )}

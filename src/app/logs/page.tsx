@@ -17,24 +17,43 @@ import { formatDate } from '@/lib/utils';
 // Define the log entry schema
 const logSchema = z.object({
   date: z.string().min(1, { message: 'Date is required' }),
-  notes: z.string().max(500, { message: 'Notes must be 500 characters or less' }).optional(),
-  mood: z.string().optional(),
-  symptoms: z.string().optional(),
-  weight: z.string().optional(),
+  notes: z.string().max(500, { message: 'Notes must be 500 characters or less' }).optional().nullable(),
+  mood: z.string().optional().nullable(),
+  symptoms: z.string().optional().nullable(),
+  weight: z.string().optional().nullable(),
 });
 
 type LogFormValues = z.infer<typeof logSchema>;
 
-// Define the log entry type
+// Define the log entry type to match the database schema
 type LogEntry = {
   id: string;
   user_id: string;
   created_at: string;
-  date: string;
+  date?: string; // Added as it may be derived from created_at
   notes: string | null;
-  mood: string | null;
-  symptoms: string | null;
-  weight: string | null;
+  mood: string[] | null; // Array in database
+  symptoms: string[] | null; // Array in database
+  weight: number | null; // Number in database
+};
+
+// Helper function to convert string to array
+const stringToArray = (value: string | null | undefined): string[] | null => {
+  if (!value) return null;
+  return value.split(',').map(item => item.trim()).filter(item => item.length > 0);
+};
+
+// Helper function to convert string to number
+const stringToNumber = (value: string | null | undefined): number | null => {
+  if (!value) return null;
+  const num = parseFloat(value);
+  return isNaN(num) ? null : num;
+};
+
+// Helper function to convert array to string
+const arrayToString = (value: string[] | null | undefined): string => {
+  if (!value || !Array.isArray(value)) return '';
+  return value.join(', ');
 };
 
 export default function LogsPage() {
@@ -75,11 +94,23 @@ export default function LogsPage() {
       const { data, error } = await supabase
         .from('pregnancy_logs')
         .select('*')
-        .order('date', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      setLogs(data || []);
+      // Map the database response to include a date field if needed
+      const formattedLogs = (data || []).map(log => {
+        // Type assertion to handle potential missing date field
+        const dbLog = log as any;
+        // Use existing date or extract from created_at
+        const dateValue = dbLog.date || dbLog.created_at.split('T')[0];
+        return {
+          ...log,
+          date: dateValue
+        };
+      }) as LogEntry[];
+
+      setLogs(formattedLogs);
     } catch (error) {
       console.error('Error fetching logs:', error);
       setMessage({
@@ -107,17 +138,20 @@ export default function LogsPage() {
     const supabase = createClient();
 
     try {
+      // Convert form string values to appropriate types for database
+      const dbData = {
+        date: data.date,
+        notes: data.notes,
+        mood: stringToArray(data.mood),
+        symptoms: stringToArray(data.symptoms),
+        weight: stringToNumber(data.weight)
+      };
+
       if (currentLogId) {
         // Update existing log
         const { error } = await supabase
           .from('pregnancy_logs')
-          .update({
-            date: data.date,
-            notes: data.notes || null,
-            mood: data.mood || null,
-            symptoms: data.symptoms || null,
-            weight: data.weight || null,
-          })
+          .update(dbData)
           .eq('id', currentLogId);
 
         if (error) throw error;
@@ -130,11 +164,7 @@ export default function LogsPage() {
         // Create new log
         const { error } = await supabase.from('pregnancy_logs').insert({
           user_id: user.id,
-          date: data.date,
-          notes: data.notes || null,
-          mood: data.mood || null,
-          symptoms: data.symptoms || null,
-          weight: data.weight || null,
+          ...dbData
         });
 
         if (error) throw error;
@@ -170,11 +200,11 @@ export default function LogsPage() {
   const handleEdit = (log: LogEntry) => {
     setCurrentLogId(log.id);
     reset({
-      date: log.date,
+      date: log.date || log.created_at.split('T')[0],
       notes: log.notes || '',
-      mood: log.mood || '',
-      symptoms: log.symptoms || '',
-      weight: log.weight || '',
+      mood: arrayToString(log.mood),
+      symptoms: arrayToString(log.symptoms),
+      weight: log.weight?.toString() || '',
     });
 
     // Scroll to form
@@ -430,7 +460,7 @@ export default function LogsPage() {
                       >
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="font-medium text-lg">
-                            {formatDate(log.date)}
+                            {formatDate(log.date || log.created_at.split('T')[0])}
                           </h3>
                           <div className="flex space-x-2">
                             <Button
@@ -459,16 +489,16 @@ export default function LogsPage() {
                         </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                          {log.mood && (
+                          {log.mood && log.mood.length > 0 && (
                             <div>
                               <span className="text-xs font-medium text-muted-foreground block">Mood</span>
-                              <span>{log.mood}</span>
+                              <span>{Array.isArray(log.mood) ? log.mood.join(', ') : log.mood}</span>
                             </div>
                           )}
-                          {log.symptoms && (
+                          {log.symptoms && log.symptoms.length > 0 && (
                             <div>
                               <span className="text-xs font-medium text-muted-foreground block">Symptoms</span>
-                              <span>{log.symptoms}</span>
+                              <span>{Array.isArray(log.symptoms) ? log.symptoms.join(', ') : log.symptoms}</span>
                             </div>
                           )}
                           {log.weight && (

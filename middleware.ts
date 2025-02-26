@@ -77,7 +77,8 @@ export async function middleware(req: NextRequest) {
           
           // If no due date or error, redirect to onboarding
           if (error || !profile || (!profile.due_date && !profile.onboarding_completed)) {
-            return NextResponse.redirect(new URL('/onboarding', req.url));
+            // Go to dashboard instead, the modal will appear there
+            return NextResponse.redirect(new URL('/dashboard', req.url));
           }
         } catch (error) {
           console.error('Error checking profile completion:', error);

@@ -38,12 +38,13 @@ export async function POST(request: NextRequest) {
     
     // Try to also update the preferences in the users table
     try {
+      // Use type assertion to avoid TypeScript error with unknown properties
       const { error: updateError } = await supabase
         .from('users')
         .update({ 
           concerns: concerns || [],
           pregnancy_experience: experience || '' 
-        })
+        } as any)
         .eq('id', userId);
       
       if (updateError) {
