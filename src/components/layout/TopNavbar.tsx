@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { cn, formatDate } from '@/lib/utils';
+import { usePathname, useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import { cn, formatDate, searchContent, type SearchResult, type SearchResults } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 import {
   Calendar,
@@ -35,21 +35,18 @@ import {
   Medal,
   HelpCircle,
   AlertCircle,
-  Bell
+  Bell,
+  Search,
+  Loader2,
+  LayoutGrid,
+  BookOpen as BookOpenIcon,
+  X
 } from 'lucide-react';
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SideNav } from '@/components/dashboard/SideNav';
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -162,9 +159,16 @@ interface TopNavbarProps {
 
 export function TopNavbar({ currentWeek = 26 }: TopNavbarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const [searchResults, setSearchResults] = useState<SearchResults>({ tools: [], lessons: [] });
   const { setTheme, theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
   
   // Calculate days left
   const daysLeft = ((40 - currentWeek) * 7);
@@ -173,6 +177,89 @@ export function TopNavbar({ currentWeek = 26 }: TopNavbarProps) {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Command/Ctrl + K to focus search
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+      
+      // Escape to clear search
+      if (e.key === 'Escape') {
+        setSearchQuery('');
+        setShowResults(false);
+        searchInputRef.current?.blur();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+  
+  // Close search results when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        searchContainerRef.current && 
+        !searchContainerRef.current.contains(event.target as Node)
+      ) {
+        setShowResults(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Search handler
+  const handleSearch = useCallback(async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    
+    if (searchQuery.trim().length < 2) {
+      setSearchResults({ tools: [], lessons: [] });
+      return;
+    }
+    
+    setIsSearching(true);
+    
+    try {
+      const results = await searchContent(searchQuery);
+      setSearchResults(results);
+      setShowResults(true);
+    } catch (error) {
+      console.error('Search error:', error);
+    } finally {
+      setIsSearching(false);
+    }
+  }, [searchQuery]);
+  
+  // Search on input change with debounce
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchQuery.trim().length >= 2) {
+        handleSearch();
+      }
+    }, 300);
+    
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, handleSearch]);
+
+  // Handle navigation to search result
+  const handleResultClick = (path: string) => {
+    router.push(path);
+    setSearchQuery('');
+    setShowResults(false);
+  };
+  
+  // Clear search
+  const clearSearch = () => {
+    setSearchQuery('');
+    setShowResults(false);
+    searchInputRef.current?.focus();
+  };
 
   // Toggle dark mode
   const toggleDarkMode = () => {
@@ -184,6 +271,9 @@ export function TopNavbar({ currentWeek = 26 }: TopNavbarProps) {
   
   // Count unread notifications
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  // Total results count
+  const totalResults = searchResults.tools.length + searchResults.lessons.length;
 
   return (
     <header className="sticky top-0 z-40 border-b bg-background">
@@ -212,126 +302,122 @@ export function TopNavbar({ currentWeek = 26 }: TopNavbarProps) {
           </Link>
         </div>
 
-        {/* Center section: Mega menus - Desktop only */}
-        <div className="hidden md:flex items-center gap-1">
-          <NavigationMenu>
-            <NavigationMenuList>
-              {/* Dashboard mega menu - Feature focused layout */}
-              <NavigationMenuItem>
-                <NavigationMenuTrigger className="bg-transparent px-3">
-                  Dashboard
-                </NavigationMenuTrigger>
-                <NavigationMenuContent className="w-[500px] lg:w-[600px]">
-                  <div className="grid gap-3 p-6">
-                    <div className="flex flex-col gap-2">
-                      <h3 className="text-lg font-medium">{dashboardMenu.title}</h3>
-                      <p className="text-sm text-muted-foreground">{dashboardMenu.description}</p>
-                    </div>
-                    <div className="grid gap-4 md:grid-cols-2">
-                      {dashboardMenu.featured.map((item) => (
-                        <Link 
-                          key={item.name} 
-                          href={item.href}
-                          className={cn(
-                            "flex flex-col gap-2 rounded-lg p-4 hover:bg-accent",
-                            pathname === item.href ? "bg-accent" : ""
-                          )}
-                        >
-                          <div className="flex items-center gap-2">
-                            <item.icon className="h-5 w-5 text-primary" />
-                            <h3 className="font-medium">{item.name}</h3>
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            {item.description}
-                          </p>
-                        </Link>
-                      ))}
-                    </div>
-                    <Separator className="my-2" />
-                    <div className="grid grid-cols-2 gap-3">
-                      {dashboardMenu.sections[0].items.map((item) => (
-                        <Link 
-                          key={item.name} 
-                          href={item.href}
-                          className={cn(
-                            "flex items-center gap-2 text-sm p-2 rounded-md hover:bg-accent",
-                            pathname === item.href ? "bg-accent" : ""
-                          )}
-                        >
-                          <item.icon className="h-4 w-4" />
-                          <span>{item.name}</span>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                </NavigationMenuContent>
-              </NavigationMenuItem>
-
-              {/* Pregnancy Journey mega menu - Column layout */}
-              <NavigationMenuItem>
-                <NavigationMenuTrigger className="bg-transparent px-3">
-                  Pregnancy
-                </NavigationMenuTrigger>
-                <NavigationMenuContent className="w-[500px] lg:w-[600px]">
-                  <div className="grid grid-cols-2 gap-6 p-6">
-                    {pregnancyJourneyMenu.items.map((section, index) => (
-                      <div key={index} className="space-y-3">
-                        <h3 className="text-sm font-medium">{section.heading}</h3>
-                        <ul className="space-y-2">
-                          {section.links.map((link) => (
-                            <li key={link.name}>
-                              <Link
-                                href={link.href}
-                                className={cn(
-                                  "flex items-center gap-2 text-sm p-2 rounded-md",
-                                  pathname === link.href 
-                                    ? "bg-accent text-accent-foreground" 
-                                    : "hover:bg-accent hover:text-accent-foreground"
-                                )}
-                              >
-                                <link.icon className="h-4 w-4" />
-                                <span>{link.name}</span>
-                              </Link>
-                            </li>
-                          ))}
-                        </ul>
+        {/* Center section: Search Bar */}
+        <div className="flex-1 mx-4 hidden md:block">
+          <div ref={searchContainerRef} className="w-full max-w-3xl mx-auto relative">
+            <form onSubmit={handleSearch} className="w-full">
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+                  {isSearching ? (
+                    <Loader2 className="h-5 w-5 text-muted-foreground/70 animate-spin" />
+                  ) : (
+                    <Search className="h-5 w-5 text-muted-foreground/70 group-hover:text-primary transition-colors duration-200" />
+                  )}
+                </div>
+                <Input
+                  type="search"
+                  placeholder="Search tools and online course lessons..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => searchQuery.trim().length >= 2 && setShowResults(true)}
+                  className="block w-full h-12 pl-12 pr-20 rounded-xl text-base focus-visible:ring-primary dark:shadow-soft border-input/50 transition-all duration-300"
+                  ref={searchInputRef}
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                  {searchQuery.length > 0 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={clearSearch}
+                      className="h-8 w-8 mr-1 hover:bg-accent"
+                    >
+                      <X className="h-4 w-4" />
+                      <span className="sr-only">Clear search</span>
+                    </Button>
+                  )}
+                  <kbd className="hidden sm:inline-flex h-6 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-xs font-medium text-muted-foreground opacity-100">
+                    <span className="text-xs">⌘</span>K
+                  </kbd>
+                </div>
+              </div>
+            </form>
+            
+            {/* Search Results Dropdown */}
+            <AnimatePresence>
+              {showResults && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute w-full mt-2 rounded-lg border bg-card shadow-lg dark:shadow-soft overflow-hidden z-50"
+                >
+                  <div className="p-4">
+                    {isSearching ? (
+                      <div className="flex justify-center items-center py-8">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary/70" />
                       </div>
-                    ))}
-                  </div>
-                </NavigationMenuContent>
-              </NavigationMenuItem>
-
-              {/* Resources mega menu - Card layout */}
-              <NavigationMenuItem>
-                <NavigationMenuTrigger className="bg-transparent px-3">
-                  Resources
-                </NavigationMenuTrigger>
-                <NavigationMenuContent className="w-[500px] lg:w-[600px]">
-                  <div className="grid grid-cols-2 gap-3 p-4">
-                    {resourcesMenu.map((item) => (
-                      <Link
-                        key={item.title}
-                        href={item.href}
-                        className="group flex flex-col space-y-2 rounded-md p-3 hover:bg-accent"
-                      >
-                        <div className="flex items-center gap-2">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary">
-                            <item.icon className="h-5 w-5" />
+                    ) : totalResults > 0 ? (
+                      <div className="divide-y">
+                        {/* Tools section */}
+                        {searchResults.tools.length > 0 && (
+                          <div className="pb-3">
+                            <div className="flex items-center mb-2">
+                              <LayoutGrid className="h-4 w-4 mr-2 text-primary" />
+                              <h3 className="text-sm font-medium">Tools</h3>
+                            </div>
+                            <ul className="space-y-1">
+                              {searchResults.tools.map((result) => (
+                                <li key={result.id}>
+                                  <button
+                                    onClick={() => handleResultClick(result.path)}
+                                    className="w-full text-left px-3 py-2 rounded-md hover:bg-accent flex items-center"
+                                  >
+                                    <span className="text-sm">{result.title}</span>
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
                           </div>
-                          <h3 className="font-medium group-hover:text-accent-foreground">
-                            {item.title}
-                          </h3>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          {item.description}
-                        </p>
-                      </Link>
-                    ))}
+                        )}
+                        
+                        {/* Lessons section */}
+                        {searchResults.lessons.length > 0 && (
+                          <div className={searchResults.tools.length > 0 ? "pt-3" : ""}>
+                            <div className="flex items-center mb-2">
+                              <BookOpenIcon className="h-4 w-4 mr-2 text-primary" />
+                              <h3 className="text-sm font-medium">Lessons</h3>
+                            </div>
+                            <ul className="space-y-1">
+                              {searchResults.lessons.map((result) => (
+                                <li key={result.id}>
+                                  <button
+                                    onClick={() => handleResultClick(result.path)}
+                                    className="w-full text-left px-3 py-2 rounded-md hover:bg-accent flex items-center"
+                                  >
+                                    <span className="text-sm">{result.title}</span>
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    ) : searchQuery.trim().length >= 2 ? (
+                      <div className="text-center py-8">
+                        <p className="text-muted-foreground">No results found for "{searchQuery}"</p>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <p className="text-muted-foreground">Enter at least 2 characters to search</p>
+                      </div>
+                    )}
                   </div>
-                </NavigationMenuContent>
-              </NavigationMenuItem>
-            </NavigationMenuList>
-          </NavigationMenu>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         {/* Right section: Next appointment, notifications, dark mode toggle, and profile */}
@@ -346,12 +432,6 @@ export function TopNavbar({ currentWeek = 26 }: TopNavbarProps) {
               </div>
             </div>
           )}
-
-          {/* Days Left Counter */}
-          <div className="hidden md:flex flex-col items-end">
-            <p className="text-sm font-medium">{daysLeft}</p>
-            <p className="text-xs text-muted-foreground">days left</p>
-          </div>
 
           {/* Notifications Dropdown */}
           <DropdownMenu>
@@ -484,6 +564,106 @@ export function TopNavbar({ currentWeek = 26 }: TopNavbarProps) {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+      </div>
+      
+      {/* Mobile Search */}
+      <div className="md:hidden px-2 pb-2">
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+            {isSearching ? (
+              <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />
+            ) : (
+              <Search className="h-4 w-4 text-muted-foreground" />
+            )}
+          </div>
+          <Input
+            type="search"
+            placeholder="Search tools and lessons..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="block w-full h-10 pl-10 pr-10 rounded-lg text-sm dark:shadow-soft border-input/50"
+          />
+          {searchQuery.length > 0 && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={clearSearch}
+              className="absolute inset-y-0 right-0 flex items-center justify-center h-10 w-10"
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Clear search</span>
+            </Button>
+          )}
+        </div>
+        
+        {/* Mobile Search Results */}
+        <AnimatePresence>
+          {showResults && searchQuery.trim().length >= 2 && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="mt-1 p-2 rounded-lg border bg-card shadow-md max-h-[60vh] overflow-auto"
+            >
+              {isSearching ? (
+                <div className="flex justify-center items-center py-6">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary/70" />
+                </div>
+              ) : totalResults > 0 ? (
+                <div className="divide-y">
+                  {/* Tools section */}
+                  {searchResults.tools.length > 0 && (
+                    <div className="pb-2">
+                      <div className="flex items-center mb-1">
+                        <LayoutGrid className="h-3 w-3 mr-1 text-primary" />
+                        <h3 className="text-xs font-medium">Tools</h3>
+                      </div>
+                      <ul className="space-y-1">
+                        {searchResults.tools.map((result) => (
+                          <li key={result.id}>
+                            <button
+                              onClick={() => handleResultClick(result.path)}
+                              className="w-full text-left px-2 py-1.5 rounded-md hover:bg-accent flex items-center"
+                            >
+                              <span className="text-xs">{result.title}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  
+                  {/* Lessons section */}
+                  {searchResults.lessons.length > 0 && (
+                    <div className={searchResults.tools.length > 0 ? "pt-2" : ""}>
+                      <div className="flex items-center mb-1">
+                        <BookOpenIcon className="h-3 w-3 mr-1 text-primary" />
+                        <h3 className="text-xs font-medium">Lessons</h3>
+                      </div>
+                      <ul className="space-y-1">
+                        {searchResults.lessons.map((result) => (
+                          <li key={result.id}>
+                            <button
+                              onClick={() => handleResultClick(result.path)}
+                              className="w-full text-left px-2 py-1.5 rounded-md hover:bg-accent flex items-center"
+                            >
+                              <span className="text-xs">{result.title}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-xs text-muted-foreground">No results found</p>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </header>
   );
