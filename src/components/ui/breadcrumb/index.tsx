@@ -44,7 +44,7 @@ const routeMapping: Record<string, string> = {
   health: 'Health',
   nutrition: 'Nutrition',
   baby: 'Baby Development',
-  resources: 'Resources',
+  wiki: 'Pregnancy Wiki',
 };
 
 export function Breadcrumb() {

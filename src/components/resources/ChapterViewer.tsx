@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Chapter } from '@/data/book-chapter-template';
 import { getAdjacentChapters } from '@/data/book-chapters';
 import { Button } from '@/components/ui/button';
@@ -187,22 +186,38 @@ export function ChapterViewer({ chapter }: ChapterViewerProps) {
                 <div className="mt-10 space-y-6">
                   <h3 className="text-xl font-semibold border-b pb-2">Illustrations</h3>
                   <div className="grid grid-cols-1 gap-8">
-                    {chapter.images.map((image, index) => (
-                      <Card key={index} className="overflow-hidden bg-secondary/5 border-0 shadow-sm">
-                        <div className="relative h-64 md:h-80 w-full">
-                          <div className="absolute inset-0 flex items-center justify-center bg-muted/30">
-                            <p className="text-sm text-muted-foreground px-4 text-center">
-                              [Placeholder for image: {image.alt}]
-                            </p>
+                    {chapter.images.map((image, index) => {
+                      // Choose an appropriate emoji based on the image alt text or description
+                      let emoji = '📷'; // Default camera emoji
+                      
+                      // Determine better emoji based on alt text
+                      const alt = image.alt.toLowerCase();
+                      if (alt.includes('baby') || alt.includes('infant')) emoji = '👶';
+                      else if (alt.includes('food') || alt.includes('nutrition')) emoji = '🥗';
+                      else if (alt.includes('exercise') || alt.includes('fitness')) emoji = '🏃‍♀️';
+                      else if (alt.includes('sleep')) emoji = '😴';
+                      else if (alt.includes('heart') || alt.includes('health')) emoji = '❤️';
+                      else if (alt.includes('mother') || alt.includes('pregnant')) emoji = '🤰';
+                      else if (alt.includes('diagram') || alt.includes('chart')) emoji = '📊';
+                      
+                      return (
+                        <Card key={index} className="overflow-hidden bg-secondary/5 border-0 shadow-sm">
+                          <div className="relative h-64 md:h-80 w-full">
+                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted/30">
+                              <div className="text-[80px] mb-4">{emoji}</div>
+                              <p className="text-sm text-muted-foreground px-4 text-center">
+                                {image.alt}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                        {image.caption && (
-                          <CardContent className="py-3 bg-secondary/5">
-                            <p className="text-sm text-muted-foreground">{image.caption}</p>
-                          </CardContent>
-                        )}
-                      </Card>
-                    ))}
+                          {image.caption && (
+                            <CardContent className="py-3 bg-secondary/5">
+                              <p className="text-sm text-muted-foreground">{image.caption}</p>
+                            </CardContent>
+                          )}
+                        </Card>
+                      );
+                    })}
                   </div>
                 </div>
               )}

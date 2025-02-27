@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import Fuse from 'fuse.js';
 import { 
   LayoutDashboard, 
   Calendar, 
@@ -20,13 +21,35 @@ import {
   ChevronUp,
   BarChart3,
   CalendarCheck,
-  Smile
+  Smile,
+  BookOpenCheck,
+  Apple,
+  UtensilsCrossed,
+  Moon,
+  Dumbbell,
+  Pill,
+  Bell,
+  Users,
+  LineChart,
+  Settings,
+  Home,
+  FileText,
+  X,
+  AlertCircle,
+  BarChart
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Input } from "@/components/ui/input";
+import { Badge } from '@/components/ui/badge';
+
+// Quick Access Items - most frequently used
+const quickAccessItems = [
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard }
+];
 
 // Navigation groups and items - simplified labels
 const navGroups = [
@@ -34,9 +57,10 @@ const navGroups = [
     id: 'journey',
     label: 'Journey',
     items: [
-      { name: 'Weekly', href: '/dashboard/weekly', icon: Calendar },
+      { name: 'Roadmap', href: '/dashboard/weekly', icon: Calendar },
       { name: 'Due Date', href: '/dashboard/due-date', icon: CalendarCheck },
-      { name: 'Baby', href: '/dashboard/baby', icon: Baby }
+      { name: 'Baby Planner', href: '/dashboard/baby', icon: Baby },
+      { name: 'Wiki', href: '/dashboard/wiki', icon: BookOpen }
     ]
   },
   {
@@ -44,27 +68,44 @@ const navGroups = [
     label: 'Tasks',
     items: [
       { name: 'Todo', href: '/dashboard/todo', icon: CheckSquare },
-      { name: 'Calendar', href: '/dashboard/appointments', icon: Clock },
+      { name: 'Appointments', href: '/dashboard/appointments', icon: Clock },
       { name: 'Shopping', href: '/dashboard/shopping', icon: ShoppingBag }
     ]
   },
   {
-    id: 'health',
-    label: 'Health',
+    id: 'tracker',
+    label: 'Tracker',
     items: [
-      { name: 'Tracker', href: '/dashboard/health', icon: Heart },
-      { name: 'Nutrition', href: '/dashboard/nutrition', icon: BarChart3 },
-      { name: 'Wellbeing', href: '/dashboard', icon: Smile }
-    ]
-  },
-  {
-    id: 'resources',
-    label: 'Learn',
-    items: [
-      { name: 'Resources', href: '/dashboard/resources', icon: BookOpen }
+      { name: 'Nutrition', href: '/dashboard/tracker/nutrition', icon: Apple },
+      { name: 'Diet', href: '/dashboard/tracker/diet', icon: UtensilsCrossed },
+      { name: 'Sleep', href: '/dashboard/tracker/sleep', icon: Moon },
+      { name: 'Reading', href: '/dashboard/tracker/reading', icon: BookOpenCheck },
+      { name: 'Exercises', href: '/dashboard/tracker/exercises', icon: Dumbbell },
+      { name: 'Supplements', href: '/dashboard/tracker/supplements', icon: Pill }
     ]
   }
 ];
+
+// Flatten all navigation items for search
+const allNavigationItems = [
+  ...quickAccessItems,
+  ...navGroups.flatMap(group => 
+    group.items.map(item => ({ 
+      ...item, 
+      groupId: group.id,
+      groupLabel: group.label 
+    }))
+  )
+];
+
+// Define a type for navigation items with optional group properties
+interface NavItem {
+  name: string;
+  href: string;
+  icon: any; // Icon component
+  groupId?: string;
+  groupLabel?: string;
+}
 
 // Baby size by week (sample data)
 const babySizeEmojis: Record<number, string> = {
@@ -105,7 +146,7 @@ const babySizeEmojis: Record<number, string> = {
   35: '🎃',
   36: '🎃',
   37: '👶', // Baby
-  38: '👶',
+  38: '��',
   39: '👶',
   40: '👶'
 };
@@ -121,8 +162,7 @@ export function SideNav({ isMobile = false, onNavigate, currentWeek = 26 }: Side
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     journey: true,
     tasks: true,
-    health: true,
-    resources: true
+    tracker: true
   });
   
   const pathname = usePathname();
@@ -174,6 +214,93 @@ export function SideNav({ isMobile = false, onNavigate, currentWeek = 26 }: Side
     visible: { opacity: 1, x: 0 }
   };
 
+  // Sidebar component for both mobile and desktop
+  const sidebarContent = (
+    <div className={cn(
+      "flex flex-col h-full bg-background",
+      isMobile ? "" : "w-[250px] border-r"
+    )}>
+      {/* Quick Access */}
+      <div className="py-1">
+        {quickAccessItems.map((item) => (
+          <Button
+            key={item.name}
+            variant="ghost"
+            className={cn(
+              "w-full justify-start px-3 py-2 h-10 text-sm",
+              pathname.includes(item.href)
+                ? "text-foreground" 
+                : "text-muted-foreground"
+            )}
+            onClick={() => handleLinkClick(item.href)}
+          >
+            <item.icon className="mr-3 h-4 w-4" />
+            {item.name}
+          </Button>
+        ))}
+      </div>
+
+      {/* Navigation Groups */}
+      <div className="flex-1 overflow-y-auto thin-scrollbar">
+        {navGroups.map((group) => (
+          <div key={group.id} className="py-1">
+            <div className="flex items-center justify-between px-3 py-2">
+              <span className="text-xs font-medium text-muted-foreground">
+                {group.label}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5 p-0"
+                onClick={() => toggleGroup(group.id)}
+              >
+                {expandedGroups[group.id] ? (
+                  <ChevronUp size={14} className="text-muted-foreground" />
+                ) : (
+                  <ChevronDown size={14} className="text-muted-foreground" />
+                )}
+              </Button>
+            </div>
+            
+            {expandedGroups[group.id] && (
+              <motion.div
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  visible: { 
+                    opacity: 1,
+                    transition: {
+                      staggerChildren: 0.05
+                    }
+                  },
+                  hidden: { opacity: 0 }
+                }}
+              >
+                {group.items.map((item) => (
+                  <motion.div key={item.name} variants={itemVariants}>
+                    <Button
+                      variant="ghost"
+                      className={cn(
+                        "w-full justify-start px-3 py-2 h-10 text-sm",
+                        pathname === item.href 
+                          ? "text-foreground" 
+                          : "text-muted-foreground"
+                      )}
+                      onClick={() => handleLinkClick(item.href)}
+                    >
+                      <item.icon className="mr-3 h-4 w-4" />
+                      {item.name}
+                    </Button>
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   if (isMobile) {
     return (
       <div className="flex flex-col h-full bg-background">
@@ -187,222 +314,14 @@ export function SideNav({ isMobile = false, onNavigate, currentWeek = 26 }: Side
             <ChevronLeft size={18} />
           </Button>
         </div>
-
-        {/* Profile section at the top */}
-        <div className="p-3 border-b">
-          <div className="flex items-center space-x-3 mb-2">
-            <Avatar className="h-9 w-9">
-              <AvatarFallback className="bg-primary/10 text-primary">SJ</AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <p className="text-sm font-medium leading-none">Sarah Johnson</p>
-              <p className="text-xs text-muted-foreground mt-1">Week {currentWeek}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Dashboard link */}
-        <div className="px-3 py-2 border-b">
-          <Button
-            variant="ghost"
-            className={cn(
-              "w-full justify-start py-1.5 h-8 text-sm",
-              pathname === '/dashboard' 
-                ? "bg-accent text-accent-foreground" 
-                : "text-muted-foreground"
-            )}
-            onClick={() => handleLinkClick('/dashboard')}
-          >
-            <LayoutDashboard className="mr-2 h-4 w-4" />
-            Dashboard
-          </Button>
-        </div>
-
-        <nav className="flex-1 py-1 overflow-auto thin-scrollbar">
-          {navGroups.map((group) => (
-            <div key={group.id} className="mb-1">
-              <Button
-                variant="ghost"
-                className="w-full justify-between px-3 py-1.5 h-7 text-xs font-medium text-muted-foreground"
-                onClick={() => toggleGroup(group.id)}
-              >
-                {group.label}
-                {expandedGroups[group.id] ? (
-                  <ChevronUp size={14} />
-                ) : (
-                  <ChevronDown size={14} />
-                )}
-              </Button>
-              
-              {expandedGroups[group.id] && (
-                <motion.ul 
-                  initial="hidden"
-                  animate="visible"
-                  variants={{
-                    visible: { 
-                      opacity: 1,
-                      transition: {
-                        staggerChildren: 0.05
-                      }
-                    },
-                    hidden: { opacity: 0 }
-                  }}
-                  className="mt-1 border-l-2 border-muted ml-3"
-                >
-                  {group.items.map((item) => (
-                    <motion.li key={item.name} variants={itemVariants}>
-                      <Button
-                        variant="ghost"
-                        className={cn(
-                          "w-full justify-start pl-3 py-1 h-7 text-sm",
-                          pathname === item.href 
-                            ? "bg-accent text-accent-foreground" 
-                            : "text-muted-foreground"
-                        )}
-                        onClick={() => handleLinkClick(item.href)}
-                      >
-                        <item.icon className="mr-2 h-4 w-4" />
-                        {item.name}
-                      </Button>
-                    </motion.li>
-                  ))}
-                </motion.ul>
-              )}
-            </div>
-          ))}
-        </nav>
-
-        {/* Sign Out button */}
-        <div className="p-3 border-t">
-          <Button 
-            variant="ghost" 
-            className="w-full flex items-center gap-2 h-8 text-sm text-muted-foreground"
-            onClick={handleSignOut}
-          >
-            <LogOut size={16} />
-            <span>Sign Out</span>
-          </Button>
-        </div>
+        {sidebarContent}
       </div>
     );
   }
 
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="h-screen border-r flex flex-col bg-background w-[220px] overflow-hidden">
-        {/* Profile section at the top with baby size emoji */}
-        <div className="p-3 border-b">
-          <div className="flex items-center space-x-3 mb-2">
-            <Avatar className="h-9 w-9">
-              <AvatarFallback className="bg-primary/10 text-primary">SJ</AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <p className="text-sm font-medium leading-none">Sarah Johnson</p>
-              <div className="flex items-center text-xs text-muted-foreground mt-1">
-                <span>Week {currentWeek}</span>
-                <span className="ml-2">{babyEmoji}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Dashboard link */}
-        <div className="p-2 border-b">
-          <Link 
-            href="/dashboard"
-            className={cn(
-              "flex items-center gap-2 py-1.5 px-3 rounded-md transition-colors",
-              "hover:bg-accent hover:text-accent-foreground font-medium",
-              pathname === '/dashboard' 
-                ? "bg-accent text-accent-foreground" 
-                : "text-foreground"
-            )}
-          >
-            <LayoutDashboard size={16} />
-            <span>Dashboard</span>
-          </Link>
-        </div>
-
-        <nav className="flex-1 py-2 overflow-auto thin-scrollbar">
-          <div className="px-2">
-            {navGroups.map((group) => (
-              <div key={group.id} className="mb-3">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-between px-3 py-1 h-7 text-xs font-medium text-muted-foreground hover:text-foreground"
-                  onClick={() => toggleGroup(group.id)}
-                >
-                  {group.label}
-                  {expandedGroups[group.id] ? (
-                    <ChevronUp size={14} />
-                  ) : (
-                    <ChevronDown size={14} />
-                  )}
-                </Button>
-                
-                {expandedGroups[group.id] && (
-                  <motion.ul 
-                    initial="hidden"
-                    animate="visible"
-                    variants={{
-                      visible: { 
-                        opacity: 1,
-                        transition: {
-                          staggerChildren: 0.05
-                        }
-                      },
-                      hidden: { opacity: 0 }
-                    }}
-                    className="mt-1 border-l-2 border-muted ml-2"
-                  >
-                    {group.items.map((item) => (
-                      <motion.li key={item.name} variants={itemVariants}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Link 
-                              href={item.href}
-                              className={cn(
-                                "flex items-center gap-2 py-1 px-2 rounded-md transition-colors text-sm ml-2",
-                                "hover:bg-accent hover:text-accent-foreground",
-                                pathname === item.href 
-                                  ? "bg-accent text-accent-foreground" 
-                                  : "text-muted-foreground"
-                              )}
-                            >
-                              <item.icon size={15} />
-                              <span className="truncate">{item.name}</span>
-                            </Link>
-                          </TooltipTrigger>
-                          <TooltipContent side="right" align="center" className="text-xs">
-                            {item.name === 'Weekly' ? 'Weekly Journey' : 
-                             item.name === 'Due Date' ? 'Due Date Planning' :
-                             item.name === 'Baby' ? 'Baby Development' :
-                             item.name === 'Todo' ? 'To-Do List' :
-                             item.name === 'Calendar' ? 'Appointments' :
-                             item.name === 'Tracker' ? 'Health Tracker' : item.name}
-                          </TooltipContent>
-                        </Tooltip>
-                      </motion.li>
-                    ))}
-                  </motion.ul>
-                )}
-              </div>
-            ))}
-          </div>
-        </nav>
-
-        {/* Sign Out button */}
-        <div className="p-3 border-t mt-auto">
-          <Button 
-            variant="ghost" 
-            className="w-full flex items-center gap-2 h-8 text-sm text-muted-foreground hover:text-foreground"
-            onClick={handleSignOut}
-          >
-            <LogOut size={16} />
-            <span>Sign Out</span>
-          </Button>
-        </div>
-      </div>
+      {sidebarContent}
     </TooltipProvider>
   );
 } 

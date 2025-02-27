@@ -9,6 +9,7 @@ import {
   Milestone,
   MemoryEntry
 } from '@/types/journey.types';
+import { useSearchStore } from '@/store/search-store';
 
 // Sample data for today's focus
 const sampleTodaysFocus: TodaysFocus[] = [
@@ -89,6 +90,7 @@ const JourneyContext = createContext<{
 
 export function JourneyProvider({ children }: { children: ReactNode }) {
   const [journeyState, setJourneyState] = useState<UserJourneyState>(defaultJourneyState);
+  const { setSearchMode } = useSearchStore();
 
   // Update journey state with partial updates
   const updateJourneyState = (updates: Partial<UserJourneyState>) => {
@@ -153,6 +155,16 @@ export function JourneyProvider({ children }: { children: ReactNode }) {
       )
     }));
   };
+
+  // Set search mode to include journey-specific content when in this context
+  useEffect(() => {
+    setSearchMode('both');
+    
+    // Cleanup when unmounting
+    return () => {
+      setSearchMode('global');
+    };
+  }, [setSearchMode]);
 
   // Initial data load - would connect to database in production
   useEffect(() => {

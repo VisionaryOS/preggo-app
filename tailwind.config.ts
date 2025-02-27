@@ -1,7 +1,6 @@
 import type { Config } from "tailwindcss";
 import { fontFamily } from "tailwindcss/defaultTheme";
 import tailwindcssAnimate from "tailwindcss-animate";
-import colors from "tailwindcss/colors";
 
 export default {
   darkMode: ["class"],
@@ -19,8 +18,6 @@ export default {
         "2xl": "1400px",
       },
     },
-    transparent: "transparent",
-    current: "currentColor",
     extend: {
       colors: {
         border: "hsl(var(--border))",
@@ -58,31 +55,31 @@ export default {
         },
         tremor: {
           brand: {
-            faint: "#eff6ff",
-            muted: "#bfdbfe",
-            subtle: "#60a5fa",
-            DEFAULT: "#3b82f6",
-            emphasis: "#1d4ed8",
-            inverted: "#ffffff",
+            faint: "hsl(var(--background))",
+            muted: "hsl(var(--muted))",
+            subtle: "hsl(var(--accent))",
+            DEFAULT: "hsl(var(--primary))",
+            emphasis: "hsl(var(--ring))",
+            inverted: "hsl(var(--primary-foreground))",
           },
           background: {
-            muted: "#f9fafb",
-            subtle: "#f3f4f6",
-            DEFAULT: "#ffffff",
-            emphasis: "#374151",
+            muted: "hsl(var(--muted))",
+            subtle: "hsl(var(--accent))",
+            DEFAULT: "hsl(var(--background))",
+            emphasis: "hsl(var(--foreground))",
           },
           border: {
-            DEFAULT: "#e5e7eb",
+            DEFAULT: "hsl(var(--border))",
           },
           ring: {
-            DEFAULT: "#e5e7eb",
+            DEFAULT: "hsl(var(--ring))",
           },
           content: {
-            subtle: "#9ca3af",
-            DEFAULT: "#6b7280",
-            emphasis: "#374151",
-            strong: "#111827",
-            inverted: "#ffffff",
+            subtle: "hsl(var(--muted-foreground))",
+            DEFAULT: "hsl(var(--foreground))",
+            emphasis: "hsl(var(--accent-foreground))",
+            strong: "hsl(var(--card-foreground))",
+            inverted: "hsl(var(--background))",
           },
         },
       },
@@ -109,11 +106,19 @@ export default {
         },
         glow: {
           "0%, 100%": {
-            boxShadow: "0 0 20px rgba(var(--color-primary), 0.7)",
+            boxShadow: "0 0 20px rgba(var(--ring), 0.7)",
           },
           "50%": {
-            boxShadow: "0 0 40px rgba(var(--color-primary), 0.9)",
+            boxShadow: "0 0 40px rgba(var(--ring), 0.9)",
           },
+        },
+        float: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-10px)" },
+        },
+        pulse: {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.7" },
         },
       },
       animation: {
@@ -121,6 +126,8 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         "shimmer": "shimmer 3s ease-in-out infinite",
         "glow": "glow 3s ease-in-out infinite",
+        "float": "float 5s ease-in-out infinite",
+        "pulse": "pulse 2s ease-in-out infinite",
       },
     },
   },

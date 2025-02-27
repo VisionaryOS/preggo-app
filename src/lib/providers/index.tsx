@@ -3,6 +3,7 @@
 import React from 'react';
 import { ThemeProvider } from './theme-provider';
 import { QueryClientProvider } from './query-client-provider';
+import { SearchPreloader } from './search-preloader';
 
 interface ProvidersProps {
   children: React.ReactNode;
@@ -26,6 +27,7 @@ export function Providers({ children }: ProvidersProps) {
       disableTransitionOnChange
     >
       <QueryClientProvider>
+        <SearchPreloader />
         {children}
       </QueryClientProvider>
     </ThemeProvider>

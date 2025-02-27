@@ -8,7 +8,7 @@ export const createServerClient = async () => {
   try {
     // Try to use cookie-based auth first (preferred)
     return createRouteHandlerClient<Database>({ 
-      cookies: () => cookies() 
+      cookies: () => cookies() // cookies() doesn't need to be awaited as per Next.js docs
     });
   } catch (error) {
     // Fallback to direct client if cookies are not available
@@ -26,13 +26,13 @@ export const createServerClient = async () => {
 // For use in Server Components with cookie-based auth
 export const createServerComponentSupabase = async () => {
   return createServerComponentClient<Database>({ 
-    cookies: () => cookies() 
+    cookies: () => cookies() // cookies() doesn't need to be awaited as per Next.js docs
   });
 };
 
 // Specifically for API route handlers
 export const createAPIRouteClient = async () => {
   return createRouteHandlerClient<Database>({ 
-    cookies: () => cookies() 
+    cookies: () => cookies() // cookies() doesn't need to be awaited as per Next.js docs
   });
 }; 
