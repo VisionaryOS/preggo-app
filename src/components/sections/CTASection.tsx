@@ -10,7 +10,7 @@ export default function CTASection() {
       <Card className="max-w-3xl mx-auto">
         <CardHeader>
           <CardTitle className="text-2xl">Ready to begin your journey?</CardTitle>
-          <CardDescription>Join thousands of expectant mothers who trust PregnancyPlus</CardDescription>
+          <CardDescription>Join thousands of expectant mothers who trust NuMama</CardDescription>
         </CardHeader>
         <CardFooter className="flex justify-center">
           <Link href="/signup">

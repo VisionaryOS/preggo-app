@@ -61,7 +61,7 @@ export default function LoginPage() {
       <header className="border-b sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto py-4 flex justify-between items-center">
           <Link href="/" className="flex items-center gap-2">
-            <span className="font-bold text-xl">PregnancyPlus</span>
+            <span className="font-bold text-xl">NuMama</span>
           </Link>
           <div className="flex items-center gap-4">
             <Link href="/signup">
@@ -78,7 +78,7 @@ export default function LoginPage() {
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
             <CardDescription>
-              Log in to your PregnancyPlus account
+              Log in to your NuMama account
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -144,7 +144,7 @@ export default function LoginPage() {
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <div className="text-sm text-center text-muted-foreground">
-              Don't have an account yet?{" "}
+              Don&apos;t have an account yet?{" "}
               <Link href="/signup" className="text-primary hover:underline">
                 Sign up
               </Link>
@@ -158,7 +158,7 @@ export default function LoginPage() {
         <div className="container mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-4 md:mb-0">
-              <p className="text-sm text-muted-foreground">© 2024 PregnancyPlus. All rights reserved.</p>
+              <p className="text-sm text-muted-foreground">© 2024 NuMama. All rights reserved.</p>
             </div>
             <div className="flex gap-6">
               <Link href="/privacy" className="text-sm text-muted-foreground hover:text-foreground">

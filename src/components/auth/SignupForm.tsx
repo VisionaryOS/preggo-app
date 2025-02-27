@@ -83,21 +83,36 @@ export default function SignupForm({ onStepChange }: SignupFormProps) {
     clearError();
 
     try {
-      // Step 1: Sign up the user
+      // Step 1: Sign up the user with explicit onboarding_completed: true
       const signupResponse = await signUp(data.email, data.password, {
         full_name: data.fullName,
         due_date: data.dueDate || null,
+        onboarding_completed: true // Changed from false to true
       });
       
       if (signupResponse.error) {
         return; // Error is already handled by useAuth
       }
 
+      // Auto-login after successful signup
+      try {
+        const { error: signInError } = await signIn(data.email, data.password);
+        if (signInError) {
+          console.error('Auto-login failed:', signInError.message);
+        } else {
+          console.log('Auto-login successful');
+        }
+      } catch (autoLoginError) {
+        console.error('Auto-login error:', autoLoginError);
+      }
+
       setSuccess(true);
       
-      // No longer auto-redirecting to onboarding - user must complete the form
-      // and click the Continue button manually after seeing success message
-      setIsRedirecting(false);
+      // Use router to navigate to dashboard after a brief delay
+      setTimeout(() => {
+        console.log('Redirecting to dashboard...');
+        router.push('/dashboard');
+      }, 1500);
     } finally {
       setIsLoading(false);
     }

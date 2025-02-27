@@ -301,7 +301,7 @@ export default function LogsPage() {
               <CardHeader>
                 <CardTitle>{currentLogId ? 'Edit Log Entry' : 'Add New Log Entry'}</CardTitle>
                 <CardDescription>
-                  Record how you're feeling and any important notes
+                  Record how you&apos;re feeling and any important notes
                 </CardDescription>
               </CardHeader>
               <CardContent>

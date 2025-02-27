@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const supabase = createAPIRouteClient();
+    const supabase = await createAPIRouteClient();
     
     // Step 1: Sign up the user
     const { data: signupData, error: signupError } = await supabase.auth.signUp({

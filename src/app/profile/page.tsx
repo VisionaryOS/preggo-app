@@ -348,7 +348,7 @@ export default function ProfilePage() {
                         <FormItem>
                           <FormLabel>Interests</FormLabel>
                           <FormDescription className="mb-4">
-                            Select topics you'd like to see more content about
+                            Select topics you&apos;d like to see more content about
                           </FormDescription>
                           <div className="grid grid-cols-2 gap-3">
                             {interestOptions.map(interest => (

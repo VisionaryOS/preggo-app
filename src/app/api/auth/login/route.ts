@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const supabase = createAPIRouteClient();
+    const supabase = await createAPIRouteClient();
     
     const { data, error } = await supabase.auth.signInWithPassword({
       email,

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { createClient } from '@/lib/supabase/client';
 
 interface SignupFormProps {
   onSignupSuccess?: () => void;
@@ -179,20 +180,44 @@ export function SignupForm({ onSignupSuccess }: SignupFormProps) {
     setIsLoading(true);
     
     try {
-      // Replace with your actual signup logic
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Create the account using the Supabase API
+      const supabase = createClient();
+      
+      // First, sign up the user with metadata
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: passwordRef.current,
+        options: {
+          data: {
+            full_name: formData.fullName,
+            due_date: formData.dueDate || null,
+            concerns: formData.concerns,
+            experience: formData.experience,
+            onboarding_completed: true // Change to true since we're removing onboarding
+          }
+        }
+      });
+      
+      if (error) {
+        console.error('Signup error:', error.message);
+        return;
+      }
+      
       setAccountCreated(true);
       
-      // Additional delay to show account created message
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Ensure the metadata is available by refetching the user
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log('User metadata after signup:', user?.user_metadata);
       
       if (onSignupSuccess) {
         onSignupSuccess();
       } else {
-        router.push('/dashboard');
+        // Use location.href instead of router.push to force a full page reload
+        // This ensures the dashboard loads with a fresh authentication state
+        window.location.href = '/dashboard';
       }
     } catch (error) {
-      // Handle error
+      console.error('Signup error:', error);
     } finally {
       setIsLoading(false);
     }

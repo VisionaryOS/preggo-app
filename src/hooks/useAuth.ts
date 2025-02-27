@@ -129,21 +129,30 @@ export const useAuthStore = create<AuthState>()((set) => ({
   
   signOut: async () => {
     try {
-      set({ isLoading: true });
+      set({ isLoading: true, error: null });
       
-      await fetch('/api/auth/signout', {
+      const response = await fetch('/api/auth/signout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
       
-      set(state => ({ 
-        ...state,
+      if (!response.ok) {
+        const result = await response.json();
+        console.error('Sign out error:', result.error);
+        set({ error: result.error || 'Failed to sign out' });
+        return;
+      }
+      
+      set({ 
         user: null, 
         session: null, 
-        isAuthenticated: false 
-      }));
+        isAuthenticated: false,
+        error: null
+      });
     } catch (error) {
-      console.error('Error signing out:', error);
+      const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+      console.error('Error signing out:', message);
+      set({ error: 'Failed to sign out. Please try again.' });
     } finally {
       set(state => ({ ...state, isLoading: false }));
     }

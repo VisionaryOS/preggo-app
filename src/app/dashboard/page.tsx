@@ -1,217 +1,76 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ModeToggle } from '@/components/ui/theme-toggle';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import OnboardingModal from '@/components/onboarding/OnboardingModal';
 import { createClient } from '@/lib/supabase/client';
 
+// Components
+import WellbeingSuite from '@/components/wellbeing/WellbeingSuite';
+import { Loader2 } from 'lucide-react';
+
 export default function DashboardPage() {
-  const [showOnboarding, setShowOnboarding] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+  const [currentWeek, setCurrentWeek] = useState<number>(12);
 
-  // Check if user has completed onboarding
   useEffect(() => {
-    const checkOnboardingStatus = async () => {
-      try {
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (user) {
-          // Check if onboarding_completed exists in user metadata
-          const onboardingCompleted = user.user_metadata?.onboarding_completed;
-          setShowOnboarding(!onboardingCompleted);
-        }
-      } catch (error) {
-        console.error('Error checking onboarding status:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkOnboardingStatus();
+    checkAuth();
+    calculateCurrentWeek();
   }, []);
+
+  // Function to check authentication and user metadata
+  const checkAuth = async () => {
+    try {
+      const supabase = createClient();
+      
+      // Get the user
+      const { data, error } = await supabase.auth.getUser();
+      
+      if (error) {
+        console.error('❌ Auth error:', error.message);
+        setIsLoading(false);
+        return;
+      }
+      
+      if (data.user) {
+        setUser(data.user);
+      }
+      
+      setIsLoading(false);
+    } catch (err) {
+      console.error('Error checking auth:', err);
+      setIsLoading(false);
+    }
+  };
+
+  // Calculate current week of pregnancy based on due date
+  const calculateCurrentWeek = () => {
+    // This would typically come from the user's profile/database
+    // For now, we'll use a fixed due date for demonstration
+    const dueDate = new Date('2024-10-15');
+    const today = new Date();
+    
+    // Pregnancy is approximately 40 weeks
+    // Calculate backward from due date
+    const daysUntilDue = Math.floor((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const weeksUntilDue = Math.floor(daysUntilDue / 7);
+    const currentWeek = 40 - weeksUntilDue;
+    
+    // Ensure the week is between 1 and 40
+    const clampedWeek = Math.max(1, Math.min(40, currentWeek));
+    setCurrentWeek(clampedWeek);
+  };
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <>
-      {showOnboarding && <OnboardingModal />}
-      
-      <div className="min-h-screen flex flex-col">
-        {/* Header */}
-        <header className="border-b sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="container mx-auto py-4 flex justify-between items-center">
-            <Link href="/" className="flex items-center gap-2">
-              <span className="font-bold text-xl">PregnancyPlus</span>
-            </Link>
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="sm">Profile</Button>
-              <Button variant="ghost" size="sm">Settings</Button>
-              <Button variant="outline" size="sm">Log out</Button>
-              <ModeToggle />
-            </div>
-          </div>
-        </header>
-        
-        {/* Main Content */}
-        <main className="flex-grow container mx-auto py-8">
-          <div className="grid gap-6">
-            {/* Welcome Card */}
-            <Card className="col-span-3">
-              <CardHeader>
-                <CardTitle>Welcome to your dashboard</CardTitle>
-                <CardDescription>
-                  Track your pregnancy journey and get personalized insights
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className="text-2xl font-bold">Week 12</h2>
-                      <p className="text-muted-foreground">Second Trimester</p>
-                    </div>
-                    <Button>View Details</Button>
-                  </div>
-                  <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
-                    <div className="bg-primary h-full rounded-full" style={{ width: '30%' }}></div>
-                  </div>
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>Week 1</span>
-                    <span>Week 40</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            {/* Dashboard Tabs */}
-            <Tabs defaultValue="overview" className="col-span-3">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="health">Health</TabsTrigger>
-                <TabsTrigger value="calendar">Calendar</TabsTrigger>
-                <TabsTrigger value="community">Community</TabsTrigger>
-              </TabsList>
-              <TabsContent value="overview" className="space-y-4 pt-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Today's Tips</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className="space-y-4">
-                        <li className="flex items-start gap-2">
-                          <span className="text-primary">💧</span>
-                          <p>Remember to drink 8-10 glasses of water today</p>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-primary">🫐</span>
-                          <p>Berries are packed with antioxidants and vitamin C</p>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-primary">🧘‍♀️</span>
-                          <p>Try prenatal yoga to relieve back pain</p>
-                        </li>
-                      </ul>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Baby's Development</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="mb-4">This week, your baby is about the size of a lime 🍋</p>
-                      <ul className="space-y-2">
-                        <li className="flex items-start gap-2">
-                          <span className="text-primary">•</span>
-                          <p>Fingernails and toenails are forming</p>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-primary">•</span>
-                          <p>All essential organs are in place</p>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-primary">•</span>
-                          <p>Your baby can now make facial expressions</p>
-                        </li>
-                      </ul>
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="health" className="pt-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Health Tracking</CardTitle>
-                    <CardDescription>Track your symptoms and health metrics</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-center py-12">Health tracking content will be displayed here</p>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="calendar" className="pt-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Appointment Calendar</CardTitle>
-                    <CardDescription>Track your upcoming appointments</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-center py-12">Calendar content will be displayed here</p>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="community" className="pt-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>July 2025 Mom Group</CardTitle>
-                    <CardDescription>Connect with other moms due in July</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-center py-12">Community content will be displayed here</p>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </div>
-        </main>
-        
-        {/* Footer */}
-        <footer className="border-t py-8 bg-muted/40">
-          <div className="container mx-auto">
-            <div className="flex flex-col md:flex-row justify-between items-center">
-              <div className="mb-4 md:mb-0">
-                <p className="text-sm text-muted-foreground">© 2024 PregnancyPlus. All rights reserved.</p>
-              </div>
-              <div className="flex gap-6">
-                <Link href="/privacy" className="text-sm text-muted-foreground hover:text-foreground">
-                  Privacy
-                </Link>
-                <Link href="/terms" className="text-sm text-muted-foreground hover:text-foreground">
-                  Terms
-                </Link>
-                <Link href="/help" className="text-sm text-muted-foreground hover:text-foreground">
-                  Help
-                </Link>
-              </div>
-            </div>
-          </div>
-        </footer>
-      </div>
-    </>
+    <div className="container mx-auto py-4 px-4 md:px-6">
+      <WellbeingSuite />
+    </div>
   );
 } 

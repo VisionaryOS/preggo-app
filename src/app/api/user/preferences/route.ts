@@ -5,7 +5,7 @@ export async function POST(request: NextRequest) {
   try {
     const { concerns, experience } = await request.json();
     
-    const supabase = createAPIRouteClient();
+    const supabase = await createAPIRouteClient();
     
     // Check if the user is authenticated
     const { data: { session } } = await supabase.auth.getSession();

@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const supabase = createAPIRouteClient();
+    const supabase = await createAPIRouteClient();
     
     const { data, error } = await supabase.auth.getSession();
     

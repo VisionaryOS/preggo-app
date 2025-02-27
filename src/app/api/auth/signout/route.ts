@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 export async function POST() {
   try {
-    const supabase = createAPIRouteClient();
+    const supabase = await createAPIRouteClient();
     
     const { error } = await supabase.auth.signOut();
     

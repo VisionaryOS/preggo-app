@@ -4,11 +4,12 @@ import { Database } from '@/types/database.types';
 import { createClient } from '@supabase/supabase-js';
 
 // Server-side Supabase client (for API routes and server components)
-export const createServerClient = () => {
+export const createServerClient = async () => {
   try {
     // Try to use cookie-based auth first (preferred)
-    const cookieStore = cookies();
-    return createRouteHandlerClient<Database>({ cookies: () => cookieStore });
+    return createRouteHandlerClient<Database>({ 
+      cookies: () => cookies() 
+    });
   } catch (error) {
     // Fallback to direct client if cookies are not available
     const supabaseUrl = process.env.SUPABASE_URL;
@@ -23,13 +24,15 @@ export const createServerClient = () => {
 };
 
 // For use in Server Components with cookie-based auth
-export const createServerComponentSupabase = () => {
-  const cookieStore = cookies();
-  return createServerComponentClient<Database>({ cookies: () => cookieStore });
+export const createServerComponentSupabase = async () => {
+  return createServerComponentClient<Database>({ 
+    cookies: () => cookies() 
+  });
 };
 
 // Specifically for API route handlers
-export const createAPIRouteClient = () => {
-  const cookieStore = cookies();
-  return createRouteHandlerClient<Database>({ cookies: () => cookieStore });
+export const createAPIRouteClient = async () => {
+  return createRouteHandlerClient<Database>({ 
+    cookies: () => cookies() 
+  });
 }; 
