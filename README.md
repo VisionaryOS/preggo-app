@@ -4,21 +4,24 @@ A Next.js application built with Supabase for pregnant women to track their jour
 
 ## Features
 
-- **User Authentication**: Secure email/password and social login
-- **Personalized Dashboard**: Week-by-week pregnancy tracking
-- **Symptom Logging**: Track mood, symptoms, and notes
-- **Onboarding Experience**: Guided setup for new users
-- **Profile Management**: Update personal details and preferences
-- **Responsive Design**: Mobile-first experience
+- **Authentication**: Secure user signup, login, and session management
+- **Responsive Dashboard**: Personalized user dashboard optimized for all devices
+- **Profile Management**: Comprehensive user profile customization
+- **Health Tracking**: Record and monitor pregnancy-related health metrics and symptoms
+- **Content Library**: Educational resources tailored to pregnancy stages
+- **Journey Timeline**: Visual week-by-week pregnancy journey tracking
+- **Dark Mode**: Elegant toggle between light and dark themes
+- **Mobile Optimization**: Fully responsive design for all screen sizes
 
 ## Tech Stack
 
-- **Framework**: Next.js 15 with App Router
+- **Framework**: Next.js 15.1.7 with App Router
 - **Language**: TypeScript
 - **Database & Auth**: Supabase
 - **Styling**: Tailwind CSS with shadcn/ui components
 - **State Management**: React hooks and Zustand
 - **Form Handling**: React Hook Form with Zod validation
+- **Data Fetching**: TanStack Query for efficient data management
 
 ## Getting Started
 
@@ -59,74 +62,65 @@ npm run dev
 
 ## Project Structure
 
-The project follows a clean and well-organized structure:
+```
+preggo-app/
+├── public/             # Static assets
+├── src/
+│   ├── app/            # Next.js app router pages
+│   ├── components/     # Reusable UI components
+│   │   ├── auth/       # Authentication components
+│   │   ├── dashboard/  # Dashboard-specific components
+│   │   ├── ui/         # Shadcn UI components
+│   │   └── layout/     # Layout components
+│   ├── hooks/          # Custom React hooks
+│   ├── lib/            # Utility functions and shared logic
+│   │   ├── supabase/   # Supabase client utilities
+│   │   └── utils.ts    # General utility functions
+│   └── types/          # TypeScript type definitions
+├── supabase/           # Supabase migrations and seed data
+└── middleware.ts       # NextJS middleware for auth & routing
+```
 
-- `/src/app`: Next.js app router pages and layouts
-- `/src/components`: Reusable UI components
-  - `/components/ui`: shadcn/ui components
-  - `/components/layout`: Layout components like headers and footers
-  - `/components/auth`: Authentication-related components
-  - `/components/dashboard`: Dashboard-specific components
-  - `/components/features`: Feature-specific components
-  - `/components/onboarding`: Onboarding flow components
-- `/src/hooks`: Custom React hooks
-- `/src/lib`: Utility functions and services
-  - `/lib/supabase`: Supabase client and service functions
-  - `/lib/config`: Application configuration
-  - `/lib/providers`: React context providers
-  - `/lib/utils`: Utility functions
-- `/public`: Static assets
-- `/supabase`: Supabase configuration files
+## User Flow
+
+1. New users sign up with email and password
+2. Users are directed to their dashboard
+3. Users can view and update their profile
+4. Dashboard provides health tracking and informational content
 
 ## Authentication
 
-### Flow
+The application uses Supabase Authentication with:
 
-1. Users sign up via email/password or social providers
-2. New users are directed to onboarding to set up their profile
-3. Authentication state is maintained via secure cookies
-4. Protected routes automatically redirect to login when needed
-5. Routes that require completed onboarding will redirect accordingly
+- Email/password authentication
+- Secure session management
+- Protected routes via middleware
 
-### Implementation
+## Application Flow
 
-- Client-side auth: `createClientComponentClient`
-- Server-side auth: `createServerComponentClient` and `createRouteHandlerClient`
-- Route protection: Next.js middleware
+The application uses Next.js middleware (`middleware.ts`) to manage authentication and route protection:
+
+- Public routes: `/`, `/login`, `/signup`, etc.
+- Protected routes: `/dashboard`, `/profile`, `/logs`, etc. (require authentication)
+- Route protection: Unauthenticated users are redirected to login
 
 ## Database Schema
 
-### Users Table
+### Main Tables
 
 ```sql
-CREATE TABLE public.users (
-  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  email TEXT NOT NULL,
+-- Authentication information handled by Supabase Auth
+
+-- User profiles
+CREATE TABLE users (
+  id UUID NOT NULL PRIMARY KEY REFERENCES auth.users(id),
   full_name TEXT,
-  due_date TEXT,
-  pregnancy_week INT,
-  health_conditions TEXT[],
-  interests TEXT[],
-  ai_personalization JSONB,
-  preferences JSONB,
-  onboarding_completed BOOLEAN DEFAULT false,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-  last_updated TIMESTAMP WITH TIME ZONE DEFAULT now()
+  due_date DATE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
-```
 
-### Pregnancy Logs Table
-
-```sql
-CREATE TABLE public.pregnancy_logs (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
-  symptoms TEXT[],
-  mood TEXT[],
-  weight NUMERIC,
-  notes TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
-);
+-- Other tables as needed for health logs, etc.
 ```
 
 ## Performance Optimizations
@@ -200,3 +194,86 @@ See [CHANGELOG.md](CHANGELOG.md) for a detailed history of changes.
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Pregnancy Tracker App
+
+A comprehensive pregnancy tracking dashboard application built with Next.js.
+
+### Features
+
+- **Three-Column Layout**:
+  - Left sidebar for navigation
+  - Main pregnancy tracker content in the center
+  - AI chat assistant on the right side
+  - Responsive design that adapts to different screen sizes
+
+- **Pregnancy Tracker**:
+  - Visual timeline of all 40 weeks
+  - Current week highlight with baby size comparison
+  - Weekly development highlights for baby and mother
+  - Progress indicators
+
+- **AI Chat Assistant**:
+  - Contextual help based on current pregnancy week
+  - Persistent chat history using local storage
+  - Simple conversational interface
+
+### Technologies Used
+
+- Next.js App Router
+- React with TypeScript
+- Tailwind CSS
+- shadcn/ui components
+- Framer Motion animations
+- Supabase authentication
+
+### Getting Started
+
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Set up environment variables:
+   ```
+   Copy .env.example to .env.local and fill in required values
+   ```
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
+
+### Project Structure
+
+- `/src/app/dashboard` - Dashboard page
+- `/src/components/dashboard` - Dashboard-specific components:
+  - `PregnancyTracker.tsx` - Main pregnancy tracking UI
+  - `AIChat.tsx` - Chat interface for pregnancy assistant
+  - `SideNav.tsx` - Left sidebar navigation
+
+### Implementation Details
+
+#### Pregnancy Tracker
+- Uses a week-by-week data structure to display pregnancy information
+- Shows baby size comparisons with fruit/vegetable emojis
+- Provides developmental milestones and tips for each week
+- Interactive week selector to view different weeks
+
+#### AI Chat
+- Simulated AI responses based on context
+- Implements local storage for message persistence
+- Collapsible interface for mobile responsiveness
+
+#### Navigation
+- Collapsible sidebar with profile summary
+- Simple navigation between main app sections
+- Responsive design for mobile use
+
+### Future Enhancements
+
+- Connect AI chat to a real AI model API
+- Implement user account settings and personalization
+- Add symptom tracking and appointment scheduling
+- Expand weekly content with more detailed information
+- Add community features for connecting with other expecting parents

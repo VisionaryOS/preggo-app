@@ -5,6 +5,26 @@ All notable changes to the Preggo App will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2024-07-31
+
+### Added
+- Added new media query hook for responsive design
+- Added journey types for better type safety
+- Improved mobile responsiveness throughout the app
+
+### Changed
+- Updated authentication flow and API routes
+- Enhanced UI components for better user experience
+- Refined dashboard layout and styling
+- Updated site manifest for better PWA support
+- Improved signup form with better validation
+- Updated global styles for consistency
+
+### Fixed
+- Fixed authentication callback handling
+- Resolved session management issues
+- Improved user preferences API endpoint
+
 ## [0.2.0] - 2024-07-10
 
 ### Added
@@ -33,3 +53,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Basic onboarding experience
 - Profile management
 - Responsive design 
+
+## [Unreleased]
+
+### Added
+
+### Changed
+
+### Removed
+- Removed onboarding experience and related components
+- Simplified user flow to skip onboarding requirements 
